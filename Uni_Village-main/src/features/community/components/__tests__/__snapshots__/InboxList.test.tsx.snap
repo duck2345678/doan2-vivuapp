@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`InboxList renders conversations correctly 1`] = `null`;
+
+exports[`InboxList renders loading state 1`] = `null`;

@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: vnuguide-backend
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vnuguidedb}
+    username: ${SPRING_DATASOURCE_USERNAME:vnuguide}
+    password: ${SPRING_DATASOURCE_PASSWORD:vnuguide}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Cấu hình Flyway (Quản lý version DB) - TẮT vì dùng Supabase
+  # Để thêm SYSTEM message type, chạy SQL sau trên Supabase SQL Editor:
+  # ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_type_check;
+  # ALTER TABLE messages ADD CONSTRAINT messages_type_check CHECK (type IN ('TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'DOCUMENT', 'SHARED_POST', 'SYSTEM'));
+  flyway:
+    enabled: false
+
+  # Cấu hình JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: ${SHOW_SQL:false}
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Performance optimizations
+        default_batch_fetch_size: 25
+        query.timeout: 30
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  # Cấu hình Caffeine Cache
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=5m,recordStats
+
+  # Cấu hình OAuth2 (Google Login)
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_CLIENT_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH2_CLIENT_GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+  # Cấu hình Redis (hỗ trợ cả local và Railway)
+  data:
+    redis:
+      host: ${REDISHOST:${SPRING_REDIS_HOST:localhost}}
+      port: ${REDISPORT:${SPRING_REDIS_PORT:6379}}
+      password: ${REDISPASSWORD:${SPRING_REDIS_PASSWORD:}}
+      username: ${REDISUSER:default}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+
+  # Cấu hình Mail (SMTP)
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # Cấu hình Upload file (Tăng giới hạn)
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+# Cấu hình JWT & Custom Security
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
+      expiration: 86400000 # 1 ngày
+      refresh-token:
+        expiration: 604800000 # 7 ngày
+  oauth2:
+    post-login-redirect: ${OAUTH2_REDIRECT_URL:http://localhost:8080/oauth2-redirect.html}
+
+# Cấu hình Cloudinary (Upload ảnh/video)
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
+# Google Maps Platform API Configuration
+google:
+  maps:
+    api-key: ${GOOGLE_MAPS_API_KEY}
+  places:
+    api-key: ${GOOGLE_PLACES_API_KEY:${GOOGLE_MAPS_API_KEY}}
+  routes:
+    api-key: ${GOOGLE_ROUTES_API_KEY:${GOOGLE_MAPS_API_KEY}}
+
+# Gemini AI Configuration
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
+
+# Server Configuration (Railway inject PORT)
+server:
+  port: ${PORT:8080}
+

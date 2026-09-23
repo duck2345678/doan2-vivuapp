@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Uni Village",
+    "slug": "Uni_Village",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/univillage-logo.png",
+    "scheme": "univillage",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.univillage.app",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/assets/images/univillage-logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#EFF6FF",
+          "dark": {
+            "image": "./src/assets/images/univillage-logo.png",
+            "imageWidth": 200,
+            "backgroundColor": "#1E293B"
+          }
+        }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

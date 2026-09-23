@@ -1,0 +1,79 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã có lỗi xảy ra",
+    "retry": "Thử lại",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "close": "Đóng",
+    "search": "Tìm kiếm",
+    "noResults": "Không có kết quả",
+    "viewDetails": "Xem chi tiết →"
+  },
+  "chat": {
+    "selectItinerary": "Chọn Lịch Trình",
+    "noItineraries": "Bạn chưa có lịch trình nào",
+    "createItineraryPrompt": "Tạo lịch trình đầu tiên để chia sẻ với bạn bè",
+    "shareItinerary": "Chia sẻ lịch trình",
+    "messagePlaceholder": "Nhập tin nhắn...",
+    "online": "Đang hoạt động",
+    "offline": "Offline",
+    "away": "Vắng mặt"
+  },
+  "itinerary": {
+    "destinations": "{{count}} điểm",
+    "destinations_plural": "{{count}} điểm",
+    "duration": "{{hours}} giờ",
+    "duration_plural": "{{hours}} giờ",
+    "ongoing": "Đang diễn ra",
+    "upcoming": "Sắp tới",
+    "past": "Đã kết thúc",
+    "noDestinations": "Chưa có điểm đến",
+    "noDuration": "Chưa xác định"
+  },
+  "time": {
+    "today": "Hôm nay",
+    "yesterday": "Hôm qua",
+    "justNow": "Vừa xong"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "sections": {
+      "account": "TÀI KHOẢN & BẢO MẬT",
+      "display": "GIAO DIỆN & HIỂN THỊ",
+      "privacy": "QUYỀN RIÊNG TƯ",
+      "support": "HỖ TRỢ"
+    },
+    "rows": {
+      "changePassword": "Đổi mật khẩu",
+      "changePasswordDesc": "Cập nhật mật khẩu của bạn",
+      "language": "Ngôn ngữ",
+      "languageCurrent": "Hiện tại: {{language}}",
+      "darkMode": "Chế độ tối",
+      "darkModeOn": "Giao diện tối đang bật",
+      "darkModeOff": "Giao diện sáng đang bật",
+      "privatePosts": "Bài viết ở chế độ riêng tư",
+      "privatePostsOn": "Bài viết của bạn ở chế độ riêng tư",
+      "privatePostsOff": "Mọi người có thể xem bài viết đã lưu",
+      "help": "Trợ giúp",
+      "helpDesc": "Câu hỏi thường gặp và hỗ trợ",
+      "about": "Giới thiệu",
+      "aboutDesc": "Thông tin về ứng dụng",
+      "logout": "Đăng xuất"
+    },
+    "logoutConfirm": "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?",
+    "logoutDesc": "Thoát khỏi tài khoản",
+    "languageModal": {
+      "title": "Chọn ngôn ngữ"
+    }
+  },
+  "nav": {
+    "map": "Bản đồ",
+    "itinerary": "Lịch trình",
+    "community": "Cộng đồng",
+    "profile": "Cá nhân"
+  }
+}

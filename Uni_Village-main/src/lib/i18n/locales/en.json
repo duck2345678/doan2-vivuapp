@@ -1,0 +1,79 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "noResults": "No results",
+    "viewDetails": "View details →"
+  },
+  "chat": {
+    "selectItinerary": "Select Itinerary",
+    "noItineraries": "You have no itineraries",
+    "createItineraryPrompt": "Create your first itinerary to share with friends",
+    "shareItinerary": "Share Itinerary",
+    "messagePlaceholder": "Type a message...",
+    "online": "Online",
+    "offline": "Offline",
+    "away": "Away"
+  },
+  "itinerary": {
+    "destinations": "{{count}} destinations",
+    "destinations_plural": "{{count}} destinations",
+    "duration": "{{hours}} hours",
+    "duration_plural": "{{hours}} hours",
+    "ongoing": "Ongoing",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "noDestinations": "No destinations",
+    "noDuration": "Undefined"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "justNow": "Just now"
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "account": "ACCOUNT & SECURITY",
+      "display": "APPEARANCE & DISPLAY",
+      "privacy": "PRIVACY",
+      "support": "SUPPORT"
+    },
+    "rows": {
+      "changePassword": "Change Password",
+      "changePasswordDesc": "Update your password",
+      "language": "Language",
+      "languageCurrent": "Current: {{language}}",
+      "darkMode": "Dark Mode",
+      "darkModeOn": "Dark mode is on",
+      "darkModeOff": "Light mode is on",
+      "privatePosts": "Private Posts",
+      "privatePostsOn": "Your posts are private",
+      "privatePostsOff": "Everyone can see saved posts",
+      "help": "Help",
+      "helpDesc": "FAQs and support",
+      "about": "About",
+      "aboutDesc": "App information",
+      "logout": "Logout"
+    },
+    "logoutConfirm": "Are you sure you want to log out?",
+    "logoutDesc": "Exit your account",
+    "languageModal": {
+      "title": "Select Language"
+    }
+  },
+  "nav": {
+    "map": "Map",
+    "itinerary": "Itinerary",
+    "community": "Community",
+    "profile": "Profile"
+  }
+}

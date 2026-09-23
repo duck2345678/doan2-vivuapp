@@ -1,0 +1,85 @@
+services:
+  vnuguide-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vnuguide-backend
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vnuguidedb
+      SPRING_REDIS_HOST: redis
+      SPRING_BOOT_ADMIN_CLIENT_ENABLED: "false"
+
+    networks:
+      - vnuguide-network
+    restart: unless-stopped
+
+    develop:
+      watch:
+        - path: .
+          action: rebuild
+          ignore:
+            - .git
+            - .idea
+            - target
+            - mvnw.cmd
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: vnuguide-postgres
+
+    environment:
+      POSTGRES_DB: vnuguidedb
+      POSTGRES_USER: vnuguide
+      POSTGRES_PASSWORD: vnuguide
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - vnuguide-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: vnuguide-redis
+
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - vnuguide-network
+    restart: unless-stopped
+
+networks:
+  vnuguide-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

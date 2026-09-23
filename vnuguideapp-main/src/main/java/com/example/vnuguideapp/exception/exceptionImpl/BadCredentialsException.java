@@ -1,0 +1,12 @@
+package com.example.vnuguideapp.exception.exceptionImpl;
+
+import com.example.vnuguideapp.exception.BaseException;
+
+public class BadCredentialsException extends BaseException {
+    private static final String ERROR_CODE = "BAD_CREDENTIALS";
+
+    public BadCredentialsException(String message) {
+        super(message, ERROR_CODE);
+    }
+}
+

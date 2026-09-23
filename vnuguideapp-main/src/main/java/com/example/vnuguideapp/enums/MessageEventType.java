@@ -1,0 +1,22 @@
+package com.example.vnuguideapp.enums;
+
+public enum MessageEventType {
+    SEND,
+    EDIT,
+    UNSEND,
+    SEEN,
+    DELIVERED,
+    TYPING,
+    SEND_JOIN_REQUEST,
+    ACCEPT_JOIN_REQUEST,
+    REJECT_JOIN_REQUEST,
+    CHANNEL_CHANGED,
+    CHANNEL_CREATED,
+    MEMBER_ADDED,
+    REACTION_CHANGED,
+    COMMENT_CHANGED,
+    POST_CHANGED,
+    USER_ONLINE,
+    USER_OFFLINE,
+    BULK_PRESENCE
+}

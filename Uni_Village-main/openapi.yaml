@@ -1,0 +1,3606 @@
+openapi: 3.0.3
+info:
+  title: VNU Guide API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local Development
+  - url: https://api.vnuguide.com
+    description: Production
+tags:
+  - name: Authentication
+  - name: User
+  - name: Areas
+  - name: PlaceTypes
+  - name: Locations
+  - name: Places
+  - name: PlaceSuggestions
+  - name: PersonalPins
+  - name: Tours
+  - name: TourStops
+  - name: CheckIns
+  - name: AI
+  - name: Posts
+  - name: Comments
+  - name: Reactions
+  - name: Conversations
+  - name: Channels
+  - name: JoinConversation
+  - name: Messages
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register (request OTP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/auth/forget-password:
+    post:
+      tags: [Authentication]
+      summary: Forgot password (request OTP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgetPasswordRequest"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/auth/verify-otp-register:
+    post:
+      tags: [Authentication]
+      summary: Verify OTP and register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRequest"
+      responses:
+        "200":
+          description: Auth tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAuthenticationResponse"
+  /api/v1/auth/verify-otp-forget-password:
+    post:
+      tags: [Authentication]
+      summary: Verify OTP and reset password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRequest"
+      responses:
+        "200":
+          description: Auth tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAuthenticationResponse"
+  /api/v1/auth/authenticate:
+    post:
+      tags: [Authentication]
+      summary: Authenticate with email/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthenticationRequest"
+      responses:
+        "200":
+          description: Auth tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAuthenticationResponse"
+  /api/v1/auth/refresh-token:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer refresh token
+      responses:
+        "200":
+          description: Raw AuthenticationResponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticationResponse"
+
+  /api/v1/users/changepassword:
+    post:
+      tags: [User]
+      security:
+        - bearerAuth: []
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+
+  /api/v1/areas:
+    get:
+      tags: [Areas]
+      summary: List areas
+      responses:
+        "200":
+          description: List of areas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAreaList"
+  /api/v1/admin/areas:
+    post:
+      tags: [Areas]
+      security:
+        - bearerAuth: []
+      summary: Create area (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AreaRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAreaResponse"
+  /api/v1/admin/areas/{id}:
+    patch:
+      tags: [Areas]
+      security:
+        - bearerAuth: []
+      summary: Update area (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AreaRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseAreaResponse"
+
+  /api/v1/place-types:
+    get:
+      tags: [PlaceTypes]
+      summary: List place types
+      responses:
+        "200":
+          description: List of place types
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceTypeList"
+  /api/v1/admin/place-types:
+    post:
+      tags: [PlaceTypes]
+      security:
+        - bearerAuth: []
+      summary: Create place type (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceTypeRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceTypeResponse"
+  /api/v1/admin/place-types/{id}:
+    patch:
+      tags: [PlaceTypes]
+      security:
+        - bearerAuth: []
+      summary: Update place type (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceTypeRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceTypeResponse"
+
+  /api/v1/locations/provinces:
+    get:
+      tags: [Locations]
+      summary: List provinces
+      responses:
+        "200":
+          description: Provinces
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseProvinceList"
+  /api/v1/locations/districts:
+    get:
+      tags: [Locations]
+      summary: List districts by province
+      parameters:
+        - in: query
+          name: provinceId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Districts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseDistrictList"
+  /api/v1/locations/wards:
+    get:
+      tags: [Locations]
+      summary: List wards by district
+      parameters:
+        - in: query
+          name: districtId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Wards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseWardList"
+
+  /api/v1/places:
+    get:
+      tags: [Places]
+      summary: Search places
+      parameters:
+        - in: query
+          name: keyword
+          schema:
+            type: string
+        - in: query
+          name: typeId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: provinceId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: districtId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: wardId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/PlaceStatus"
+        - in: query
+          name: lat
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: lng
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: radius
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Page of places
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlacePage"
+  /api/v1/places/nearby:
+    get:
+      tags: [Places]
+      summary: Nearby places
+      parameters:
+        - in: query
+          name: lat
+          required: true
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: lng
+          required: true
+          schema:
+            type: number
+            format: double
+        - in: query
+          name: radius
+          schema:
+            type: number
+            format: double
+            default: 5
+        - in: query
+          name: keyword
+          schema:
+            type: string
+        - in: query
+          name: typeId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/PlaceStatus"
+      responses:
+        "200":
+          description: Nearby places
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceList"
+  /api/v1/places/{id}:
+    get:
+      tags: [Places]
+      summary: Place details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Place
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceResponse"
+  /api/v1/admin/places:
+    post:
+      tags: [Places]
+      security:
+        - bearerAuth: []
+      summary: Create place (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceResponse"
+  /api/v1/admin/places/{id}:
+    patch:
+      tags: [Places]
+      security:
+        - bearerAuth: []
+      summary: Update place (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceResponse"
+  /api/v1/admin/places/{id}/status:
+    patch:
+      tags: [Places]
+      security:
+        - bearerAuth: []
+      summary: Update place status (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceStatusRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceResponse"
+
+  /api/v1/place-suggestions:
+    post:
+      tags: [PlaceSuggestions]
+      security:
+        - bearerAuth: []
+      summary: Submit place suggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceSuggestionRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceSuggestionResponse"
+  /api/v1/me/place-suggestions:
+    get:
+      tags: [PlaceSuggestions]
+      security:
+        - bearerAuth: []
+      summary: My place suggestions
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/PlaceSuggestionStatus"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Page of suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceSuggestionPage"
+  /api/v1/admin/place-suggestions:
+    get:
+      tags: [PlaceSuggestions]
+      security:
+        - bearerAuth: []
+      summary: All suggestions (ADMIN)
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/PlaceSuggestionStatus"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Page of suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceSuggestionPage"
+  /api/v1/admin/place-suggestions/{id}/review:
+    patch:
+      tags: [PlaceSuggestions]
+      security:
+        - bearerAuth: []
+      summary: Review suggestion (ADMIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceSuggestionReviewRequest"
+      responses:
+        "200":
+          description: Reviewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePlaceSuggestionResponse"
+
+  /api/v1/me/personal-pins:
+    get:
+      tags: [PersonalPins]
+      security:
+        - bearerAuth: []
+      summary: Get my personal pins
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Page of personal pins
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePersonalPinPage"
+    post:
+      tags: [PersonalPins]
+      security:
+        - bearerAuth: []
+      summary: Create personal pin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalPinRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePersonalPinResponse"
+  /api/v1/me/personal-pins/{id}:
+    patch:
+      tags: [PersonalPins]
+      security:
+        - bearerAuth: []
+      summary: Update personal pin
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalPinRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePersonalPinResponse"
+    delete:
+      tags: [PersonalPins]
+      security:
+        - bearerAuth: []
+      summary: Delete personal pin
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+
+  /api/v1/me/tours:
+    get:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: List my tours
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/TourStatus"
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Page of tours
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourPage"
+    post:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Create tour
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/me/tours/current:
+    get:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Get current tour
+      responses:
+        "200":
+          description: Current tour (result can be null)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/tours/{id}:
+    get:
+      tags: [Tours]
+      summary: Get tour by id (public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Tour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/me/tours/{id}:
+    patch:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Update tour
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/me/tours/{id}/complete:
+    post:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Complete tour
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/me/tours/{id}/cancel:
+    post:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Cancel tour
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/me/tours/{id}/share-as-post:
+    post:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Share tour as post
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourShareRequest"
+      responses:
+        "200":
+          description: Shared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+  /api/v1/tours/{id}/copy:
+    post:
+      tags: [Tours]
+      security:
+        - bearerAuth: []
+      summary: Copy tour
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "201":
+          description: Copied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourResponse"
+
+  /api/v1/tours/{id}/stops:
+    get:
+      tags: [TourStops]
+      security:
+        - bearerAuth: []
+      summary: Get tour stops
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Stops
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourStopList"
+  /api/v1/me/tours/{id}/stops:
+    post:
+      tags: [TourStops]
+      security:
+        - bearerAuth: []
+      summary: Add tour stop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourStopRequest"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourStopResponse"
+  /api/v1/me/tours/{id}/stops/reorder:
+    put:
+      tags: [TourStops]
+      security:
+        - bearerAuth: []
+      summary: Reorder tour stops
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TourStopReorderRequest"
+      responses:
+        "200":
+          description: Reordered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseTourStopList"
+  /api/v1/me/tours/{id}/stops/{stopId}:
+    delete:
+      tags: [TourStops]
+      security:
+        - bearerAuth: []
+      summary: Remove tour stop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: path
+          name: stopId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+
+  /api/v1/check-ins:
+    post:
+      tags: [CheckIns]
+      security:
+        - bearerAuth: []
+      summary: Check in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCheckInResponse"
+  /api/v1/me/check-ins:
+    get:
+      tags: [CheckIns]
+      security:
+        - bearerAuth: []
+      summary: My check-ins
+      parameters:
+        - in: query
+          name: placeId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: tourId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Page of check-ins
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCheckInPage"
+
+  /ai/itineraries/suggest:
+    post:
+      tags: [AI]
+      summary: Suggest AI itinerary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItinerarySuggestRequest"
+      responses:
+        "200":
+          description: Suggested itinerary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuggestedItinerary"
+
+  /api/v1/posts/create:
+    post:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Create post with files
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [postType, visibility]
+              properties:
+                content:
+                  type: string
+                postType:
+                  type: string
+                  enum: [EXPERIENCE, ITINERARY, GROUP_INVITE, TOUR, TOUR_SHARE]
+                visibility:
+                  type: string
+                  enum: [PUBLIC, FRIENDS, PRIVATE]
+                tourId:
+                  type: string
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePostResponse"
+  /api/v1/posts/{postId}:
+    get:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Get post by id
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePostResponse"
+  /api/v1/posts/{postId}/comments:
+    get:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Get comments by post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Slice of comments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommentSlice"
+  /api/v1/posts:
+    get:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Get feed
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Feed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePostSlice"
+  /api/v1/posts/me:
+    get:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Get my posts
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: My posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePostSlice"
+  /api/v1/posts/{postId}/save:
+    post:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Toggle save post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Saved/unsaved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseSavedPostResponse"
+  /api/v1/posts/{postId}/share:
+    post:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Share post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharePostRequest"
+      responses:
+        "200":
+          description: Shared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseSharePostResponse"
+  /api/v1/posts/me/saved-posts:
+    get:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Get saved posts
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Saved posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePostSlice"
+  /api/v1/posts/{post_id}:
+    delete:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Delete post
+      parameters:
+        - in: path
+          name: post_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+    put:
+      tags: [Posts]
+      security:
+        - bearerAuth: []
+      summary: Update post with files
+      parameters:
+        - in: path
+          name: post_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [postType, visibility]
+              properties:
+                content:
+                  type: string
+                postType:
+                  type: string
+                  enum: [EXPERIENCE, ITINERARY, GROUP_INVITE, TOUR, TOUR_SHARE]
+                visibility:
+                  type: string
+                  enum: [PUBLIC, FRIENDS, PRIVATE]
+                tourId:
+                  type: string
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponsePostResponse"
+
+  /api/v1/comments:
+    post:
+      tags: [Comments]
+      security:
+        - bearerAuth: []
+      summary: Create comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommentResponse"
+  /api/v1/comments/{commentId}:
+    put:
+      tags: [Comments]
+      security:
+        - bearerAuth: []
+      summary: Update comment
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommentResponse"
+    delete:
+      tags: [Comments]
+      security:
+        - bearerAuth: []
+      summary: Delete comment
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/comments/{commentId}/replies:
+    get:
+      tags: [Comments]
+      security:
+        - bearerAuth: []
+      summary: Get replies
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Replies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseCommentSlice"
+
+  /api/v1/likes/post/{postId}:
+    post:
+      tags: [Reactions]
+      security:
+        - bearerAuth: []
+      summary: Toggle like on post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Liked/unliked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLikeResponse"
+  /api/v1/likes/comment/{commentId}:
+    post:
+      tags: [Reactions]
+      security:
+        - bearerAuth: []
+      summary: Toggle like on comment
+      parameters:
+        - in: path
+          name: commentId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Liked/unliked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseLikeResponse"
+
+  /api/v1/conversations/create:
+    post:
+      tags: [Conversations]
+      security:
+        - bearerAuth: []
+      summary: Create private conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationPrivateRequest"
+      responses:
+        "201":
+          description: Conversation id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+  /api/v1/conversations/private:
+    get:
+      tags: [Conversations]
+      security:
+        - bearerAuth: []
+      summary: List private conversations
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Slice of conversations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseConversationSlice"
+  /api/v1/conversations/channels:
+    get:
+      tags: [Conversations]
+      security:
+        - bearerAuth: []
+      summary: List channel conversations
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Slice of conversations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseConversationSlice"
+  /api/v1/conversations/delete-conversation/{conversationId}:
+    delete:
+      tags: [Conversations]
+      security:
+        - bearerAuth: []
+      summary: Leave or delete conversation
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+  /api/v1/conversations/{conversationId}/media:
+    get:
+      tags: [Conversations]
+      security:
+        - bearerAuth: []
+      summary: Get conversation media
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: fileType
+          schema:
+            $ref: "#/components/schemas/FileType"
+      responses:
+        "200":
+          description: Media attachments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMediaAttachmentList"
+
+  /api/v1/channels:
+    post:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Create channel
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                privacy:
+                  $ref: "#/components/schemas/ChannelPrivacy"
+                channelType:
+                  $ref: "#/components/schemas/ChannelType"
+                participantIds:
+                  type: string
+                  description: JSON array string, e.g. [1,2,3]
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelResponse"
+  /api/v1/channels/{channelId}:
+    get:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Get channel by id
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelResponse"
+    patch:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Update channel (ADMIN)
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelResponse"
+  /api/v1/channels/conversation/{conversationId}:
+    get:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Get channel by conversation id
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelResponse"
+  /api/v1/channels/{channelId}/members:
+    get:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Get channel members
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelMemberList"
+    post:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Add members (ADMIN)
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddChannelMemberRequest"
+      responses:
+        "201":
+          description: Members added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelResponse"
+  /api/v1/channels/{channelId}/members/{memberId}:
+    delete:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Remove member (ADMIN)
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseChannelResponse"
+  /api/v1/channels/{channelId}/join-requests:
+    get:
+      tags: [Channels]
+      security:
+        - bearerAuth: []
+      summary: Join requests (ADMIN)
+      parameters:
+        - in: path
+          name: channelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Join requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseJoinRequestList"
+
+  /api/v1/conversations/join/{conversationId}:
+    post:
+      tags: [JoinConversation]
+      security:
+        - bearerAuth: []
+      summary: Send join request
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseJoinConversationResponse"
+  /api/v1/conversations/join/accept/{joinRequestId}:
+    post:
+      tags: [JoinConversation]
+      security:
+        - bearerAuth: []
+      summary: Accept join request (ADMIN)
+      parameters:
+        - in: path
+          name: joinRequestId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseJoinConversationResponse"
+  /api/v1/conversations/join/reject/{joinRequestId}:
+    patch:
+      tags: [JoinConversation]
+      security:
+        - bearerAuth: []
+      summary: Reject join request (ADMIN)
+      parameters:
+        - in: path
+          name: joinRequestId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseJoinConversationResponse"
+
+  /api/v1/messages/send:
+    post:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Send message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageRequest"
+      responses:
+        "200":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMessageResponse"
+  /api/v1/messages/upload-file:
+    post:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Send message with files
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files, conversationId]
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                conversationId:
+                  type: string
+                content:
+                  type: string
+                replyToId:
+                  type: integer
+                  format: int64
+      responses:
+        "200":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseFileMessageResponse"
+  /api/v1/messages:
+    get:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Get messages by conversation
+      parameters:
+        - in: query
+          name: conversationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Slice of messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMessageSlice"
+  /api/v1/messages/{messageId}:
+    delete:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Delete message
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseString"
+    put:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Edit message
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Edited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMessageResponse"
+  /api/v1/messages/mark-read:
+    post:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Mark conversation as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkReadRequest"
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseVoid"
+  /api/v1/messages/search:
+    get:
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      summary: Search messages
+      parameters:
+        - in: query
+          name: conversationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: keyword
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponseMessageSearchSlice"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiResponseBase:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        result:
+          nullable: true
+    ApiResponseVoid:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+    ApiResponseString:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: string
+    ApiResponseAuthenticationResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/AuthenticationResponse"
+    ApiResponseAreaList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/AreaResponse"
+    ApiResponseAreaResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/AreaResponse"
+    ApiResponsePlaceTypeList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/PlaceTypeResponse"
+    ApiResponsePlaceTypeResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PlaceTypeResponse"
+    ApiResponseProvinceList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProvinceResponse"
+    ApiResponseDistrictList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/DistrictResponse"
+    ApiResponseWardList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/WardResponse"
+    ApiResponsePlacePage:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PagePlaceResponse"
+    ApiResponsePlaceList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/PlaceResponse"
+    ApiResponsePlaceResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PlaceResponse"
+    ApiResponsePlaceSuggestionResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PlaceSuggestionResponse"
+    ApiResponsePlaceSuggestionPage:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PagePlaceSuggestionResponse"
+    ApiResponsePersonalPinResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PersonalPinResponse"
+    ApiResponsePersonalPinPage:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PagePersonalPinResponse"
+    ApiResponseTourResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/TourResponse"
+    ApiResponseTourPage:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PageTourResponse"
+    ApiResponseTourStopResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/TourStopResponse"
+    ApiResponseTourStopList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/TourStopResponse"
+    ApiResponseCheckInResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/CheckInResponse"
+    ApiResponseCheckInPage:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PageCheckInResponse"
+    ApiResponsePostResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/PostResponse"
+    ApiResponsePostSlice:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SlicePostResponse"
+    ApiResponseCommentResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/CommentResponse"
+    ApiResponseCommentSlice:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SliceCommentResponse"
+    ApiResponseSavedPostResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SavedPostResponse"
+    ApiResponseSharePostResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SharePostResponse"
+    ApiResponseLikeResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/LikeResponse"
+    ApiResponseConversationSlice:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SliceConversationResponse"
+    ApiResponseMediaAttachmentList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaAttachmentResponse"
+    ApiResponseChannelResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/ChannelResponse"
+    ApiResponseChannelMemberList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/ChannelMemberResponse"
+    ApiResponseJoinRequestList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/JoinConversationResponse"
+    ApiResponseJoinConversationResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/JoinConversationResponse"
+    ApiResponseMessageResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/MessageResponse"
+    ApiResponseFileMessageResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/FileMessageResponse"
+    ApiResponseMessageSlice:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SliceMessageResponse"
+    ApiResponseMessageSearchSlice:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            result:
+              $ref: "#/components/schemas/SliceMessageSearchResponse"
+
+    AuthenticationRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    RegisterRequest:
+      type: object
+      required: [fullname, email, username, password]
+      properties:
+        fullname:
+          type: string
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        password:
+          type: string
+    ForgetPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        newPassword:
+          type: string
+        confirmPassword:
+          type: string
+    VerifyRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+    AuthenticationResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+
+    ChangePasswordRequest:
+      type: object
+      required: [oldPassword, newPassword, confirmPassword]
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+        confirmPassword:
+          type: string
+
+    AreaRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    AreaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PlaceTypeRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    PlaceTypeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+
+    ProvinceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    DistrictResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        provinceId:
+          type: integer
+          format: int64
+    WardResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        districtId:
+          type: integer
+          format: int64
+
+    PlaceRequest:
+      type: object
+      required: [name, typeId]
+      properties:
+        name:
+          type: string
+        typeId:
+          type: integer
+          format: int64
+        areaId:
+          type: integer
+          format: int64
+        provinceId:
+          type: integer
+          format: int64
+        districtId:
+          type: integer
+          format: int64
+        wardId:
+          type: integer
+          format: int64
+        addressDetail:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/PlaceStatus"
+        isOfficial:
+          type: boolean
+        ownerUserId:
+          type: integer
+          format: int64
+    PlaceStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/PlaceStatus"
+    PlaceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        placeType:
+          $ref: "#/components/schemas/PlaceTypeResponse"
+        province:
+          $ref: "#/components/schemas/ProvinceResponse"
+        district:
+          $ref: "#/components/schemas/DistrictResponse"
+        ward:
+          $ref: "#/components/schemas/WardResponse"
+        addressDetail:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/PlaceStatus"
+        isOfficial:
+          type: boolean
+        ownerUserId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PlaceSuggestionRequest:
+      type: object
+      required: [placeName]
+      properties:
+        placeName:
+          type: string
+        typeId:
+          type: integer
+          format: int64
+        areaId:
+          type: integer
+          format: int64
+        provinceId:
+          type: integer
+          format: int64
+        districtId:
+          type: integer
+          format: int64
+        wardId:
+          type: integer
+          format: int64
+        addressDetail:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        description:
+          type: string
+    PlaceSuggestionReviewRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/PlaceSuggestionStatus"
+        rejectionReason:
+          type: string
+        createPlace:
+          type: boolean
+    PlaceSuggestionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        suggestedById:
+          type: integer
+          format: int64
+        suggestedByName:
+          type: string
+        placeName:
+          type: string
+        placeType:
+          $ref: "#/components/schemas/PlaceTypeResponse"
+        province:
+          $ref: "#/components/schemas/ProvinceResponse"
+        district:
+          $ref: "#/components/schemas/DistrictResponse"
+        ward:
+          $ref: "#/components/schemas/WardResponse"
+        addressDetail:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/PlaceSuggestionStatus"
+        rejectionReason:
+          type: string
+        reviewedById:
+          type: integer
+          format: int64
+        reviewedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    PersonalPinRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        note:
+          type: string
+    PersonalPinResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        note:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TourRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+    TourShareRequest:
+      type: object
+      required: [postTitle]
+      properties:
+        postTitle:
+          type: string
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+    TourStopRequest:
+      type: object
+      required: [placeId]
+      properties:
+        placeId:
+          type: integer
+          format: int64
+        note:
+          type: string
+        sequenceOrder:
+          type: integer
+          format: int32
+    TourStopReorderRequest:
+      type: object
+      required: [stops]
+      properties:
+        stops:
+          type: array
+          items:
+            type: object
+            properties:
+              stopId:
+                type: integer
+                format: int64
+              sequenceOrder:
+                type: integer
+                format: int32
+    TourResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/TourStatus"
+        sharedAsPost:
+          type: boolean
+        originalTourId:
+          type: integer
+          format: int64
+        stops:
+          type: array
+          items:
+            $ref: "#/components/schemas/TourStopResponse"
+        staticMapUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TourStopResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tourId:
+          type: integer
+          format: int64
+        placeId:
+          type: integer
+          format: int64
+        placeName:
+          type: string
+        sequenceOrder:
+          type: integer
+          format: int32
+        note:
+          type: string
+        place:
+          $ref: "#/components/schemas/PlaceResponse"
+    CheckInRequest:
+      type: object
+      required: [placeId]
+      properties:
+        placeId:
+          type: integer
+          format: int64
+        tourId:
+          type: integer
+          format: int64
+        note:
+          type: string
+        checkedInAt:
+          type: string
+          format: date-time
+    CheckInResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        tourId:
+          type: integer
+          format: int64
+        placeId:
+          type: integer
+          format: int64
+        placeName:
+          type: string
+        checkedInAt:
+          type: string
+          format: date-time
+        note:
+          type: string
+
+    ItinerarySuggestRequest:
+      type: object
+      required: [startLatitude, startLongitude]
+      properties:
+        mood:
+          type: string
+        startLatitude:
+          type: number
+          format: double
+        startLongitude:
+          type: number
+          format: double
+        radiusKm:
+          type: number
+          format: double
+        maxStops:
+          type: integer
+        maxDurationHours:
+          type: integer
+        placeTypes:
+          type: array
+          items:
+            type: string
+    SuggestedItinerary:
+      type: object
+      properties:
+        name:
+          type: string
+        mood:
+          type: string
+        stops:
+          type: array
+          items:
+            $ref: "#/components/schemas/SuggestedStop"
+        totalDistanceKm:
+          type: number
+          format: double
+        totalDurationMinutes:
+          type: integer
+        routePolyline:
+          type: string
+        mapPreviewUrl:
+          type: string
+    SuggestedStop:
+      type: object
+      properties:
+        sequenceOrder:
+          type: integer
+        googlePlaceId:
+          type: string
+        placeName:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        rating:
+          type: number
+          format: double
+        suggestedDurationMinutes:
+          type: integer
+        aiReason:
+          type: string
+
+    CommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        postId:
+          type: integer
+          format: int64
+        parentCommentId:
+          type: integer
+          format: int64
+    SharePostRequest:
+      type: object
+      required: [conversationId]
+      properties:
+        conversationId:
+          type: string
+        message:
+          type: string
+    PostResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        content:
+          type: string
+        postType:
+          $ref: "#/components/schemas/PostType"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        authorId:
+          type: integer
+          format: int64
+        authorName:
+          type: string
+        authorAvatarUrl:
+          type: string
+        mediaUrls:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        content:
+          type: string
+        authorId:
+          type: integer
+          format: int64
+        authorName:
+          type: string
+        authorAvatarUrl:
+          type: string
+        postId:
+          type: integer
+          format: int64
+        parentCommentId:
+          type: integer
+          format: int64
+        likeCount:
+          type: integer
+        timeStamp:
+          type: string
+          format: date-time
+    SavedPostResponse:
+      type: object
+      properties:
+        postId:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        isSaved:
+          type: boolean
+    SharePostResponse:
+      type: object
+      properties:
+        messageId:
+          type: integer
+          format: int64
+        postId:
+          type: integer
+          format: int64
+        conversationId:
+          type: string
+        senderId:
+          type: integer
+          format: int64
+        senderName:
+          type: string
+        message:
+          type: string
+        messageType:
+          $ref: "#/components/schemas/MessageType"
+        timestamp:
+          type: string
+          format: date-time
+    LikeResponse:
+      type: object
+      properties:
+        postId:
+          type: integer
+          format: int64
+        commentId:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        isLiked:
+          type: boolean
+        likeCount:
+          type: integer
+          format: int64
+
+    CreateChannelRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        privacy:
+          $ref: "#/components/schemas/ChannelPrivacy"
+        channelType:
+          $ref: "#/components/schemas/ChannelType"
+        participantIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    UpdateChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    AddChannelMemberRequest:
+      type: object
+      required: [userIds]
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    ConversationPrivateRequest:
+      type: object
+      properties:
+        receiverId:
+          type: integer
+          format: int64
+    MessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        replyToId:
+          type: integer
+          format: int64
+        ConversationId:
+          type: string
+    MarkReadRequest:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        messageId:
+          type: integer
+          format: int64
+    ChannelResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        privacy:
+          $ref: "#/components/schemas/ChannelPrivacy"
+        channelType:
+          $ref: "#/components/schemas/ChannelType"
+        avatarUrl:
+          type: string
+        conversationId:
+          type: string
+        creatorId:
+          type: integer
+          format: int64
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    ChannelMemberResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        userName:
+          type: string
+        avatarUrl:
+          type: string
+        role:
+          $ref: "#/components/schemas/ParticipantRole"
+        joinedAt:
+          type: string
+          format: date-time
+    ConversationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        unreadCount:
+          type: integer
+          format: int64
+        lastMessage:
+          type: string
+        lastMessageTime:
+          type: string
+          format: date-time
+    JoinConversationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        conversationId:
+          type: string
+        userId:
+          type: integer
+          format: int64
+        status:
+          $ref: "#/components/schemas/JoinRequestStatus"
+        createdAt:
+          type: string
+          format: date-time
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        senderId:
+          type: integer
+          format: int64
+        conversationId:
+          type: string
+        senderName:
+          type: string
+        senderAvatarUrl:
+          type: string
+        content:
+          type: string
+        messageType:
+          $ref: "#/components/schemas/MessageType"
+        readBy:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReadReceiptResponse"
+        isActive:
+          type: boolean
+        replyToId:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+    FileMessageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        senderId:
+          type: integer
+          format: int64
+        conversationId:
+          type: string
+        senderName:
+          type: string
+        senderAvatarUrl:
+          type: string
+        content:
+          type: string
+        fileUrls:
+          type: array
+          items:
+            type: string
+        messageType:
+          $ref: "#/components/schemas/MessageType"
+        readBy:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReadReceiptResponse"
+        isActive:
+          type: boolean
+        replyToId:
+          type: integer
+          format: int64
+        timestamp:
+          type: string
+          format: date-time
+    MessageSearchResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        conversationId:
+          type: string
+        conversationName:
+          type: string
+        senderId:
+          type: integer
+          format: int64
+        senderName:
+          type: string
+        senderAvatar:
+          type: string
+        content:
+          type: string
+        messageType:
+          $ref: "#/components/schemas/MessageType"
+        fileUrls:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+    MediaAttachmentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        messageId:
+          type: integer
+          format: int64
+        fileId:
+          type: integer
+          format: int64
+        fileUrl:
+          type: string
+        fileType:
+          $ref: "#/components/schemas/FileType"
+        fileSize:
+          type: integer
+          format: int64
+        uploadedAt:
+          type: string
+          format: date-time
+    ReadReceiptResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        avatarUrl:
+          type: string
+
+    Pageable:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+        pageSize:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        offset:
+          type: integer
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+    Sort:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+        empty:
+          type: boolean
+    PagePlaceResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaceResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+    PagePlaceSuggestionResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaceSuggestionResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+    PagePersonalPinResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonalPinResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+    PageTourResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/TourResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+    PageCheckInResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckInResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        empty:
+          type: boolean
+    SlicePostResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    SliceCommentResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    SliceConversationResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    SliceMessageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    SliceMessageSearchResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageSearchResponse"
+        pageable:
+          $ref: "#/components/schemas/Pageable"
+        size:
+          type: integer
+        number:
+          type: integer
+        sort:
+          $ref: "#/components/schemas/Sort"
+        numberOfElements:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+
+    PlaceStatus:
+      type: string
+      enum: [ACTIVE, TEMP_CLOSED, CLOSED]
+    PlaceSuggestionStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+    TourStatus:
+      type: string
+      enum: [ONGOING, COMPLETED, CANCELLED]
+    PostType:
+      type: string
+      enum: [EXPERIENCE, ITINERARY, GROUP_INVITE, TOUR, TOUR_SHARE]
+    Visibility:
+      type: string
+      enum: [PUBLIC, FRIENDS, PRIVATE]
+    ChannelPrivacy:
+      type: string
+      enum: [PUBLIC, PRIVATE]
+    ChannelType:
+      type: string
+      enum: [TEXT, VOICE, VIDEO, ANNOUNCEMENT]
+    ParticipantRole:
+      type: string
+      enum: [ADMIN, MEMBER]
+    ConversationType:
+      type: string
+      enum: [CHANNEL, PRIVATE, YOURSELF]
+    JoinRequestStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REJECTED]
+    MessageType:
+      type: string
+      enum: [TEXT, IMAGE, VIDEO, AUDIO, DOCUMENT, SHARED_POST]
+    FileType:
+      type: string
+      enum: [IMAGE, VIDEO, AUDIO, DOCUMENT]

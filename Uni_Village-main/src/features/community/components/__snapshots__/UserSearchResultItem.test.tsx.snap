@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`UserSearchResultItem renders correctly with avatar 1`] = `null`;
+
+exports[`UserSearchResultItem renders correctly without avatar (placeholder) 1`] = `null`;
