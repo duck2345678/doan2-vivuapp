@@ -17,6 +17,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: vivu
       SPRING_REDIS_HOST: redis
       SPRING_BOOT_ADMIN_CLIENT_ENABLED: "false"
+      AI_SERVICE_URL: http://vivu-ai-service:8001
     networks:
       - vivu-network
     restart: unless-stopped
@@ -48,6 +49,26 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vivu-network
+    restart: unless-stopped
+
+  vivu-ai-service:
+    build:
+      context: ./vivu-ai-service
+      dockerfile: Dockerfile
+    container_name: vivu-ai-service
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -1,32 +1,45 @@
-# ViVu App - Nền tảng Du lịch & Kết nối Cộng đồng Thông minh
+# ViVu App — Nền tảng Du lịch & Lập Kế hoạch Chuyến đi Thông minh với Multi-Agent AI
 
-Dự án Monorepo gồm ứng dụng di động (**React Native / Expo**) và hệ thống máy chủ dịch vụ (**Spring Boot / PostgreSQL / Redis / AI**).
+Dự án Monorepo gồm ứng dụng di động (**React Native / Expo**), máy chủ nghiệp vụ (**Spring Boot 3 / PostgreSQL / Redis**) và dịch vụ trí tuệ nhân tạo đa tác nhân (**Python FastAPI / LangGraph**).
 
 ---
 
 ## 📁 Cấu trúc Thư mục Monorepo
 
-```
-vivu-app/
-├── mobile/                   # Ứng dụng di động (React Native + Expo SDK 54)
+```text
+doan2-vivuapp/
+├── mobile/                   # Ứng dụng di động (React Native 0.81 + Expo SDK 54)
 │   ├── app/                  # File-based navigation (Expo Router v6)
-│   ├── src/                  # Mã nguồn tính năng, components, API client
-│   ├── assets/               # Hình ảnh, icon, font
-│   ├── app.json              # Cấu hình Expo (ViVu, scheme: vivuapp, com.vivu.app)
-│   └── package.json          # Quản lý thư viện frontend (vivu-mobile)
+│   ├── src/                  # Components, Screens, API client, Hooks
+│   ├── assets/               # Hình ảnh, fonts, icons
+│   ├── app.json              # Cấu hình Expo
+│   └── package.json          # Quản lý dependencies frontend
 │
-├── backend/                  # REST & Realtime WebSocket API (Spring Boot 3)
-│   ├── src/                  # Mã nguồn Java (com.example.vivuapp)
+├── backend/                  # Business & Application Server (Spring Boot 3 / Java 21)
+│   ├── src/                  # Mã nguồn Java (Auth, CRUD, WebSocket Gateway, Proxy)
+│   │   └── main/resources/db/migration/ # Flyway DB migrations
 │   ├── pom.xml               # Maven configuration (vivu-backend)
 │   ├── Dockerfile            # Container build image
-│   └── docker-compose.yml    # Khởi chạy Postgres, Redis và Backend local
+│   └── README.md             # Hướng dẫn chi tiết backend
 │
-├── docs/                     # Tài liệu thiết kế hệ thống, API và báo cáo
-│   └── openapi.yaml          # Đặc tả API OpenAPI 3.0
+├── vivu-ai-service/          # Multi-Agent Orchestration Service (Python 3.12 / LangGraph)
+│   ├── app/
+│   │   ├── main.py           # FastAPI entrypoint & healthcheck (:8001)
+│   │   ├── agents/           # 4 Agents: Supervisor, Destination, Itinerary, Budget
+│   │   ├── graph/            # LangGraph StateGraph & workflow nodes
+│   │   ├── tools/            # Cost Engine (deterministic), Places, Routes, Validation
+│   │   ├── schemas/          # Pydantic v2 runtime contracts
+│   │   ├── models/           # TravelPlanState (TypedDict normalized)
+│   │   ├── services/         # LLM & session services
+│   │   └── prompts/          # System prompts theo vai trò Agent
+│   ├── tests/                # Automated Pytest suite (15/15 PASS)
+│   ├── Dockerfile            # Container build image
+│   ├── requirements.txt      # Python dependencies
+│   └── README.md             # Hướng dẫn chi tiết AI service
 │
-├── docker-compose.yml        # Docker Compose root khởi động toàn bộ hạ tầng
-├── .gitignore                # Gitignore chung cho toàn bộ dự án
-└── README.md                 # Tài liệu hướng dẫn này
+├── docker-compose.yml        # Điều phối toàn bộ hạ tầng (Postgres, Redis, Backend, AI)
+├── .gitignore                # Gitignore chung toàn bộ dự án
+└── README.md                 # Tài liệu tổng quan này
 ```
 
 ---
@@ -34,68 +47,85 @@ vivu-app/
 ## 🚀 Hướng dẫn Cài đặt & Khởi chạy
 
 ### 1. Yêu cầu Hệ thống
-- **Node.js**: >= 20 (khuyên dùng Node 20/22 LTS)
-- **Java JDK**: >= 21 (đã hỗ trợ Java 21 & Java 23)
-- **Docker & Docker Compose**: Để chạy PostgreSQL & Redis
+- **Node.js**: >= 20 LTS
+- **Java JDK**: >= 21
+- **Python**: >= 3.12
+- **Docker & Docker Compose**: Khởi chạy container toàn hệ thống
 
 ---
 
-### 2. Khởi chạy Backend (`backend/`)
+### 2. Cách 1: Khởi chạy toàn bộ hệ thống bằng Docker (Khuyên dùng)
+Đứng tại thư mục **gốc (root)** của dự án:
 
-#### Bước 2.1: Chạy cơ sở dữ liệu (PostgreSQL & Redis)
-Bạn có thể sử dụng Docker để dựng cơ sở dữ liệu nhanh chóng:
+```bash
+# Build và chạy ngầm toàn bộ: PostgreSQL, Redis, Spring Boot Backend, Python AI Service
+docker compose up -d
+
+# Xem log các container
+docker compose logs -f
+
+# Dừng hệ thống
+docker compose down
+```
+
+Các cổng dịch vụ:
+* **Spring Boot API Gateway:** `http://localhost:8080`
+* **Python AI Service:** `http://localhost:8001` (Health: `http://localhost:8001/health`)
+* **PostgreSQL:** `localhost:5432` (`vivudb` / `vivu` / `vivu`)
+* **Redis:** `localhost:6379`
+
+---
+
+### 3. Cách 2: Chạy từng dịch vụ cho lập trình viên (Local Development)
+
+#### Bước 3.1: Dựng cơ sở dữ liệu & cache
 ```bash
 docker compose up -d postgres redis
 ```
-- PostgreSQL: `localhost:5432` (Database: `vivudb`, User: `vivu`, Password: `vivu`)
-- Redis: `localhost:6379`
 
-#### Bước 2.2: Chạy ứng dụng Spring Boot
+#### Bước 3.2: Chạy Spring Boot Backend
 ```bash
 cd backend
-
-# Chạy trực tiếp qua Maven Wrapper
 .\mvnw.cmd spring-boot:run
 ```
-Máy chủ backend sẽ chạy tại: `http://localhost:8080` (hoặc cổng được chỉ định trong `.env`).
 
----
-
-### 3. Khởi chạy Ứng dụng Di động (`mobile/`)
-
+#### Bước 3.3: Chạy Python AI Service
 ```bash
-cd mobile
-
-# Cài đặt thư viện phụ thuộc
-npm install
-
-# Khởi chạy Metro Bundler với Expo
-npm start
+cd vivu-ai-service
+# Kích hoạt virtualenv và chạy uvicorn
+.\.venv\Scripts\uvicorn.exe app.main:app --port 8001 --reload
 ```
 
-- Nhấn `a` để chạy trên Android Emulator hoặc thiết bị Android thật đã kết nối.
-- Nhấn `i` để chạy trên iOS Simulator (trên macOS).
-- Quét mã QR bằng ứng dụng **Expo Go** trên điện thoại.
+#### Bước 3.4: Chạy Mobile App
+```bash
+cd mobile
+npm install
+npm start
+```
+* Nhấn `a` để mở Android Emulator hoặc quét mã QR bằng ứng dụng **Expo Go**.
 
 ---
 
 ## 🛠️ Công nghệ Sử dụng
 
-### Frontend (Mobile):
-- **Framework**: React Native 0.81.5, Expo ~54.0.32
-- **Routing**: Expo Router v6
-- **State Management**: Zustand
-- **Data Fetching & Cache**: TanStack React Query v5, Axios
-- **Realtime**: STOMP over WebSocket (`@stomp/stompjs`)
-- **UI Components & Motion**: React Native Reanimated, Bottom Sheet, FlashList
-- **Maps**: React Native Maps & Google Places API
-- **Auth**: Firebase Authentication & Google OAuth2
+### 1. Mobile (Client)
+* **Framework:** React Native 0.81.5, Expo SDK 54 (Expo Router v6)
+* **State & Fetching:** Zustand, TanStack React Query v5, Axios
+* **Realtime:** STOMP over WebSocket (`@stomp/stompjs`)
+* **UI & Animation:** React Native Reanimated, Bottom Sheet, FlashList
+* **Maps & Auth:** React Native Maps, Firebase Authentication, Google OAuth2
 
-### Backend (API):
-- **Framework**: Spring Boot 3.3.1 (Java 21)
-- **Database**: PostgreSQL với Spring Data JPA & Hibernate
-- **Caching & Realtime state**: Redis + Lettuce
-- **Realtime**: WebSocket (STOMP Broker)
-- **AI Integration**: Google Gemini API (Gợi ý lịch trình & phân tích địa điểm)
-- **Cloud Media**: Cloudinary SDK (Upload hình ảnh, video)
-- **Security**: Spring Security + Stateless JWT Authentication
+### 2. Backend (Application & Business Layer)
+* **Framework:** Spring Boot 3.3.1 (Java 21)
+* **Database & Persistence:** PostgreSQL với Spring Data JPA & Hibernate
+* **Database Migration:** Flyway (`V1`..`V4`)
+* **Caching & Session:** Redis + Lettuce
+* **Realtime Gateway:** WebSocket (STOMP Broker)
+* **Security:** Spring Security + Stateless JWT Authentication
+* **Media Storage:** Cloudinary SDK
+
+### 3. AI Service (Multi-Agent Orchestration Layer)
+* **Framework:** Python 3.12, FastAPI, LangGraph, Pydantic v2
+* **Multi-Agent System:** Supervisor Agent, Destination Agent, Itinerary Agent, Budget Agent
+* **Cost Engine:** Thuật toán tính toán tài chính số học nguyên deterministic
+* **Testing:** Pytest với 15 unit & integration test cases
