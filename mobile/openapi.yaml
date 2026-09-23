@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  title: VNU Guide API
+  title: ViVu App API
   version: 1.0.0
 servers:
   - url: http://localhost:8080
     description: Local Development
-  - url: https://api.vnuguide.com
+  - url: https://api.vivuapp.vn
     description: Production
 tags:
   - name: Authentication

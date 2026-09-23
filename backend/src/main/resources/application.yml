@@ -1,11 +1,11 @@
 spring:
   application:
-    name: vnuguide-backend
+    name: vivu-backend
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vnuguidedb}
-    username: ${SPRING_DATASOURCE_USERNAME:vnuguide}
-    password: ${SPRING_DATASOURCE_PASSWORD:vnuguide}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vivudb}
+    username: ${SPRING_DATASOURCE_USERNAME:vivu}
+    password: ${SPRING_DATASOURCE_PASSWORD:vivu}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

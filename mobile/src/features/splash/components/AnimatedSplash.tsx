@@ -177,7 +177,7 @@ export function AnimatedSplash({ onAnimationComplete }: AnimatedSplashProps) {
         {/* Logo with pin drop animation */}
         <Animated.View style={[styles.logoContainer, logoStyle]}>
           <Image
-            source={require("@/assets/images/univillage-logo.png")}
+            source={require("@/assets/images/vivu-logo.png")}
             style={styles.logo}
             contentFit="contain"
           />

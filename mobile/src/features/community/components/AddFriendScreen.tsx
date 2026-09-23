@@ -57,7 +57,7 @@ export function AddFriendScreen() {
   };
 
   // Generate QR value from user ID
-  const qrValue = `univillage://add-friend/${CURRENT_USER_ID}`;
+  const qrValue = `vivuapp://add-friend/${CURRENT_USER_ID}`;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

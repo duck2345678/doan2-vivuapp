@@ -1,7 +1,7 @@
 /**
  * Google OAuth Callback Handler
  * This route handles the deep link callback from Google OAuth
- * URL: univillage://auth/google/callback?access_token=...&refresh_token=...
+ * URL: vivuapp://auth/google/callback?access_token=...&refresh_token=...
  */
 
 import { env } from '@/config/env';

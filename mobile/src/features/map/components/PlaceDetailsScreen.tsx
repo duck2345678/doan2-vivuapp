@@ -192,7 +192,7 @@ export function PlaceDetailsScreen() {
     const handleShare = useCallback(async () => {
         if (!place) return;
         try {
-            const deepLinkUrl = `univillage://place-details?placeId=${place.id}`;
+            const deepLinkUrl = `vivuapp://place-details?placeId=${place.id}`;
             const message = `${place.name}\n${place.address || ""}`;
 
             if (Platform.OS === "ios") {

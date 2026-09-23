@@ -11,7 +11,7 @@ import type { View } from 'react-native';
 import { Alert, Share } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
-const BASE_URL = 'https://univillage.com';
+const BASE_URL = 'https://vivuapp.vn';
 
 /**
  * Build profile share URL
@@ -48,7 +48,7 @@ export async function shareProfile(
     try {
         const url = buildShareUrl(userId);
         await Share.share({
-            message: `Xem trang cá nhân của ${displayName} trên UniVillage: ${url}`,
+            message: `Xem trang cá nhân của ${displayName} trên ViVu: ${url}`,
             url: url,
         });
     } catch (error) {
@@ -90,7 +90,7 @@ export async function captureAndSaveQr(
 
         // Save to gallery
         const asset = await MediaLibrary.createAssetAsync(uri);
-        await MediaLibrary.createAlbumAsync('UniVillage', asset, false);
+        await MediaLibrary.createAlbumAsync('ViVu', asset, false);
 
         // Clean up temp file
         await FileSystem.deleteAsync(uri, { idempotent: true });
@@ -105,6 +105,6 @@ export async function captureAndSaveQr(
  * Parse profile URL to extract user ID
  */
 export function parseProfileUrl(url: string): string | null {
-    const match = url.match(/univillage\.com\/u\/([^\/\?]+)/);
+    const match = url.match(/(?:vivuapp\.vn|univillage\.com)\/u\/([^\/\?]+)/);
     return match ? match[1] : null;
 }

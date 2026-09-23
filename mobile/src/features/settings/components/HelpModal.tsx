@@ -27,7 +27,7 @@ const DESIGN_COLORS = {
     orangeButton: '#f97316',
 };
 
-const SUPPORT_EMAIL = 'admin@univillage.com';
+const SUPPORT_EMAIL = 'support@vivuapp.vn';
 
 interface HelpModalProps {
     visible: boolean;

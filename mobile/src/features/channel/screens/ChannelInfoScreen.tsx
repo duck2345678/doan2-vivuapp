@@ -131,7 +131,7 @@ export function ChannelInfoScreen() {
   const getInviteLink = useCallback(() => {
     if (!channelInfo?.inviteCode) return "";
     // Generate a shareable link (adjust domain as needed)
-    return `https://univillage.app/channel/invite/${channelInfo.inviteCode}`;
+    return `https://vivuapp.vn/channel/invite/${channelInfo.inviteCode}`;
   }, [channelInfo?.inviteCode]);
 
   const handleCopyInviteLink = useCallback(async () => {
@@ -175,7 +175,7 @@ export function ChannelInfoScreen() {
     if (!link || !channelInfo) return;
     try {
       await Share.share({
-        message: `Tham gia channel "${channelInfo.name}" trên UniVillage!\n${link}`,
+        message: `Tham gia channel "${channelInfo.name}" trên ViVu!\n${link}`,
         title: `Mời bạn tham gia ${channelInfo.name}`,
       });
     } catch (error) {

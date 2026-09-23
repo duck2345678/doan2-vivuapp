@@ -39,7 +39,7 @@ export default function QrScanScreen() {
                 // Navigate to the scanned profile
                 router.replace(`/profile/${userId}`);
             } else {
-                // Not a valid UniVillage profile URL
+                // Not a valid ViVu profile URL
                 setScanned(false);
             }
         },
@@ -95,7 +95,7 @@ export default function QrScanScreen() {
                         Cần quyền truy cập Camera
                     </Text>
                     <Text style={[styles.permissionText, { color: colors.textSecondary }]}>
-                        Để quét mã QR, UniVillage cần quyền truy cập camera của bạn
+                        Để quét mã QR, ViVu cần quyền truy cập camera của bạn
                     </Text>
                     <Pressable
                         style={[styles.permissionButton, { backgroundColor: colors.tint }]}

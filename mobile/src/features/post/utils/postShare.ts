@@ -6,7 +6,7 @@
 import { Share } from 'react-native';
 import { PostResponse } from '../types';
 
-const BASE_URL = 'https://univillage.com';
+const BASE_URL = 'https://vivuapp.vn';
 
 /**
  * Build post share URL
@@ -28,7 +28,7 @@ export async function sharePost(
         const url = buildPostShareUrl(post.id);
         const contentPreview = post.content ?
             (post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content)
-            : 'Xem bài viết này trên UniVillage';
+            : 'Xem bài viết này trên ViVu';
 
         await Share.share({
             message: `${contentPreview}\n${url}`,

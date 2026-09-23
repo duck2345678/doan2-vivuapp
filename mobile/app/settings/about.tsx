@@ -39,13 +39,13 @@ export default function AboutRoute() {
             <View style={styles.content}>
                 <MaterialIcons name="info-outline" size={64} color={colors.textSecondary} />
                 <Text style={[styles.appName, { color: colors.textPrimary }]}>
-                    UniVillage
+                    ViVu
                 </Text>
                 <Text style={[styles.versionText, { color: colors.textSecondary }]}>
                     Phiên bản 1.0.0
                 </Text>
                 <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
-                    Mạng xã hội dành cho sinh viên đại học
+                    Ứng dụng kết nối cộng đồng & trải nghiệm du lịch thông minh ViVu
                 </Text>
             </View>
         </SafeAreaView>

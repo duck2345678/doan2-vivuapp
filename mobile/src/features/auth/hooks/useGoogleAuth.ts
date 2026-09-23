@@ -28,7 +28,7 @@ export function useGoogleAuth() {
     const { setTokens, setUser } = useAuthStore();
 
     // Create redirect URI for the app
-    const redirectUri = 'univillage://auth/google/callback';
+    const redirectUri = 'vivuapp://auth/google/callback';
 
     // Backend OAuth2 URL
     const backendOAuthUrl = `${env.API_URL}/oauth2/authorization/google`;
