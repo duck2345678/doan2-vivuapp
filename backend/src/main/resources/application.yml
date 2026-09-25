@@ -129,7 +129,19 @@ gemini:
   api-key: ${GEMINI_API_KEY:}
   base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
 
+# Internal Python AI Planning Service
+ai:
+  python:
+    plan-url: ${AI_PYTHON_PLAN_URL:http://localhost:8000/api/v1/plan/generate}
+    internal-service-key: ${AI_PYTHON_INTERNAL_SERVICE_KEY:}
+    connect-timeout-ms: ${AI_PYTHON_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${AI_PYTHON_READ_TIMEOUT_MS:35000}
+
 # Server Configuration (Railway inject PORT)
 server:
   port: ${PORT:8080}
 
+
+# Python -> Spring realtime progress callback.
+# Must be the same non-empty secret configured in the Python AI service.
+# Example: AI_PYTHON_INTERNAL_SERVICE_KEY=dev-vivu-internal-key

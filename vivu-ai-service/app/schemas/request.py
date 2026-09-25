@@ -1,6 +1,10 @@
 from __future__ import annotations
+
+from datetime import date
 from typing import List, Literal, Optional
+
 from pydantic import BaseModel, Field
+
 
 class ParsedUserRequest(BaseModel):
     destination_city: str
@@ -11,3 +15,4 @@ class ParsedUserRequest(BaseModel):
     travel_style: Literal["BUDGET", "BALANCED", "LUXURY"] = "BALANCED"
     travel_pace: Literal["RELAXED", "MODERATE", "FAST"] = "MODERATE"
     hotel_preference: Optional[str] = None
+    start_date: Optional[date] = None

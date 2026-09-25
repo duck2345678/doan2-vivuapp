@@ -186,6 +186,20 @@ public class GlobalExceptionHandler {
                 return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
         }
 
+        @ExceptionHandler(AiServiceException.class)
+        public ResponseEntity<ErrorResponse> handleAiServiceException(
+                        AiServiceException ex, WebRequest req) {
+
+                ErrorResponse error = ErrorResponse.builder()
+                                .status(HttpStatus.BAD_GATEWAY.value())
+                                .errorCode(ex.getErrorCode())
+                                .error("Bad Gateway")
+                                .message(ex.getMessage())
+                                .path(req.getDescription(false).replace("uri=", ""))
+                                .build();
+                return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+        }
+
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleGenericException(
                         Exception ex, WebRequest req) {

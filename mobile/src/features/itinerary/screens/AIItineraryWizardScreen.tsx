@@ -11,7 +11,7 @@
  */
 
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -34,6 +34,12 @@ import {
 } from "@/features/itinerary/components/AIItineraryMap";
 import { useUserLocation } from "@/features/map/hooks";
 import { generateItinerary, type Destination } from "@/lib/ai/geminiService";
+import {
+  adaptPythonPlanToLegacyItinerary,
+  createAIPlanSessionId,
+  generateAIPlan,
+} from "@/features/itinerary/api";
+import { useAIPlanProgress } from "@/features/itinerary/hooks/useAIPlanProgress";
 import { Colors, useColorScheme } from "@/shared";
 
 const { width } = Dimensions.get("window");
@@ -202,6 +208,16 @@ export function AIItineraryWizardScreen() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<any>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [aiSessionId, setAiSessionId] = useState<string | null>(null);
+
+  const { rawPrompt: rawPromptParam } = useLocalSearchParams<{
+    rawPrompt?: string | string[];
+  }>();
+  const bridgePrompt = Array.isArray(rawPromptParam)
+    ? rawPromptParam[0]
+    : rawPromptParam;
+  const bridgeMode = !!bridgePrompt?.trim();
+  const aiProgress = useAIPlanProgress(aiSessionId, isGenerating && bridgeMode);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
   const loadingDots = useRef(new Animated.Value(0)).current;
@@ -262,25 +278,58 @@ export function AIItineraryWizardScreen() {
     const startTime = Date.now();
 
     try {
-      // This will use mock data now, but will use real Gemini AI when you add API key
-      const itinerary = await generateItinerary({
-        activity: wizardData.activity!,
-        transport: wizardData.transport!,
-        budget: wizardData.budget!,
-        timeSlot: wizardData.timeSlot,
-        groupSize: wizardData.groupSize,
-      });
+      if (bridgeMode && bridgePrompt) {
+        // Phase 5B bridge mode. The existing wizard remains unchanged for the
+        // legacy flow; a caller can open this screen with ?rawPrompt=... to
+        // use Spring Boot -> Python AI + realtime progress.
+        const sessionId = createAIPlanSessionId();
+        setAiSessionId(sessionId);
 
-      // Ensure loading screen shows for at least 3 seconds
+        const result = await generateAIPlan({
+          sessionId,
+          rawPrompt: bridgePrompt.trim(),
+          userPreferences: wizardData as unknown as Record<string, unknown>,
+        });
+
+        if (result.clarification_question) {
+          throw new Error(result.clarification_question);
+        }
+
+        if (!result.success) {
+          throw new Error(
+            result.final_response_text || "ViVu AI không thể tạo kế hoạch.",
+          );
+        }
+
+        const itinerary = adaptPythonPlanToLegacyItinerary(result);
+        if (!itinerary) {
+          throw new Error(
+            "AI đã trả về kế hoạch nhưng frontend không chuyển được sang định dạng hiển thị.",
+          );
+        }
+
+        setGeneratedItinerary(itinerary);
+      } else {
+        // Legacy flow kept intact for backward compatibility.
+        const itinerary = await generateItinerary({
+          activity: wizardData.activity!,
+          transport: wizardData.transport!,
+          budget: wizardData.budget!,
+          timeSlot: wizardData.timeSlot,
+          groupSize: wizardData.groupSize,
+        });
+
+        setGeneratedItinerary(itinerary);
+      }
+
+      // Keep a short transition so the result screen does not flash instantly.
       const elapsed = Date.now() - startTime;
-      const minLoadingTime = 3000;
+      const minLoadingTime = bridgeMode ? 500 : 3000;
       if (elapsed < minLoadingTime) {
         await new Promise((resolve) =>
           setTimeout(resolve, minLoadingTime - elapsed),
         );
       }
-
-      setGeneratedItinerary(itinerary);
     } catch (error) {
       console.error("Failed to generate itinerary:", error);
     } finally {
@@ -755,12 +804,69 @@ export function AIItineraryWizardScreen() {
           ))}
         </View>
 
-        <Text style={[styles.loadingHint, { color: colors.textSecondary }]}>
-          Nhanh thôi mà, chờ xíu xíu nha!
-        </Text>
-        <Text style={[styles.loadingHint, { color: colors.textSecondary }]}>
-          (Thường mất khoảng 10-20 giây)
-        </Text>
+        {bridgeMode ? (
+          <View style={{ width: "100%", marginTop: 22 }}>
+            <Text
+              style={{
+                color: colors.text,
+                fontSize: 15,
+                fontWeight: "600",
+                textAlign: "center",
+                marginBottom: 6,
+              }}
+            >
+              {aiProgress.activeAgent || "SYSTEM"}
+            </Text>
+            <Text
+              style={{
+                color: colors.textSecondary,
+                fontSize: 14,
+                textAlign: "center",
+                lineHeight: 20,
+                marginBottom: 14,
+              }}
+            >
+              {aiProgress.message}
+            </Text>
+
+            {aiProgress.events.slice(-5).map((event, index) => (
+              <View
+                key={`${event.requestId}-${event.agent}-${event.status}-${index}`}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 5,
+                }}
+              >
+                <Ionicons
+                  name={event.status === "COMPLETED" ? "checkmark-circle" : "ellipse-outline"}
+                  size={18}
+                  color={event.status === "FAILED" ? colors.error : colors.info}
+                />
+                <Text
+                  style={{
+                    color: colors.textSecondary,
+                    fontSize: 12,
+                    marginLeft: 8,
+                    flex: 1,
+                  }}
+                  numberOfLines={2}
+                >
+                  {event.message}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <>
+            <Text style={[styles.loadingHint, { color: colors.textSecondary }]}>
+              Nhanh thôi mà, chờ xíu xíu nha!
+            </Text>
+            <Text style={[styles.loadingHint, { color: colors.textSecondary }]}>
+              (Thường mất khoảng 10-20 giây)
+            </Text>
+          </>
+        )}
       </View>
     </View>
   );

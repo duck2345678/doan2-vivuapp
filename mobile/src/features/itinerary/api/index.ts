@@ -238,3 +238,12 @@ export async function suggestItinerary(data: ItinerarySuggestRequest) {
     data,
   );
 }
+
+// Phase 5B - Spring Boot realtime AI planning bridge
+export {
+  generateAIPlan,
+  createAIPlanSessionId,
+  type AIPlanGenerateRequest,
+  type AIPlanGenerateResult,
+} from './ai-plan.api';
+export { adaptPythonPlanToLegacyItinerary } from './ai-plan.adapter';

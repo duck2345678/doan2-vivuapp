@@ -114,6 +114,14 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
 
+# Internal Python AI Planning Service
+ai:
+  python:
+    plan-url: ${AI_PYTHON_PLAN_URL}
+    internal-service-key: ${AI_PYTHON_INTERNAL_SERVICE_KEY}
+    connect-timeout-ms: ${AI_PYTHON_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${AI_PYTHON_READ_TIMEOUT_MS:35000}
+
 # Server Configuration
 server:
   port: ${PORT:8080}

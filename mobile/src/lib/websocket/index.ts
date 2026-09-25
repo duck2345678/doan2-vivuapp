@@ -1,6 +1,7 @@
 export { stompClient } from "./stompClient";
 export type {
     AckEvent,
+    AIPlanProgressEvent,
     AckStatus,
     ChannelEventPayload,
     ChatMessageEvent,

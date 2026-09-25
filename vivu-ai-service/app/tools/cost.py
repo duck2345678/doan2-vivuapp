@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Dict, Literal, Optional
+
 from app.schemas.budget import BudgetBreakdown
 
 
@@ -47,8 +48,8 @@ def calculate_budget(
         raise ValueError("num_travelers phải lớn hơn 0")
     if num_days <= 0:
         raise ValueError("num_days phải lớn hơn 0")
-    if num_nights < 0 or num_nights > num_days:
-        raise ValueError("num_nights phải nằm trong khoảng 0..num_days")
+    if num_nights < 0 or num_nights > num_days - 1:
+        raise ValueError("num_nights phải nằm trong khoảng 0..num_days-1")
 
     numeric_values = {
         "max_budget": max_budget,
@@ -59,6 +60,7 @@ def calculate_budget(
         numeric_values["explicit_hotel_cost"] = explicit_hotel_cost
     if explicit_food_cost is not None:
         numeric_values["explicit_food_cost"] = explicit_food_cost
+
     for name, value in numeric_values.items():
         if value < 0:
             raise ValueError(f"{name} không được âm")

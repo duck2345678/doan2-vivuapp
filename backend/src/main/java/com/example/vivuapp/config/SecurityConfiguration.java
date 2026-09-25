@@ -40,6 +40,7 @@ public class SecurityConfiguration {
                         "/swagger-resources/**",
                         "/swagger-ui.html",
                         "/ws/**",
+                        "/internal/ai/progress",
                         "/",
                         // Public API endpoints - VNU Guide
                         "/api/v1/areas",

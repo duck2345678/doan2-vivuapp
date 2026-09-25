@@ -318,6 +318,20 @@ class StompClientService {
     };
   }
 
+  /**
+   * Subscribe to a destination whose payload is a JSON object sent directly,
+   * rather than the legacy WebSocketMessage<T> envelope.
+   */
+  subscribeRaw<T>(
+    destination: string,
+    callback: (message: T) => void,
+  ): StompSubscription | null {
+    return this.subscribe(
+      destination,
+      callback as unknown as (message: WebSocketMessage<T>) => void,
+    );
+  }
+
   send(destination: string, body: any, headers?: StompHeaders): void {
     if (!this.client?.connected) {
       console.warn("[STOMP] Cannot send - not connected");

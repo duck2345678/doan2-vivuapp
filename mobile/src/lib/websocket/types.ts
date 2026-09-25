@@ -100,6 +100,19 @@ export interface ForceLogoutEvent {
   userId: number;
 }
 
+
+/** Realtime progress event for the ViVu multi-agent planning flow. */
+export interface AIPlanProgressEvent {
+  type: "AI_PLAN_PROGRESS" | "PLAN_STARTED" | "PLAN_COMPLETED" | "PLAN_FAILED" | "PLAN_CLARIFICATION_REQUIRED" | "AGENT_PROGRESS";
+  sessionId: string;
+  requestId: string;
+  agent: "SYSTEM" | "SUPERVISOR" | "DESTINATION" | "ITINERARY" | "BUDGET" | "OPTIMIZATION";
+  status: "STARTED" | "RUNNING" | "COMPLETED" | "FAILED" | "CLARIFICATION_REQUIRED";
+  message: string;
+  loopCount?: number;
+  timestamp?: string;
+}
+
 export interface WebSocketConfig {
   url: string;
   accessToken: string;

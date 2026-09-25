@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import List, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -19,6 +21,7 @@ class SupervisorParseResult(BaseModel):
     travel_style_explicit: bool = False
     travel_pace_explicit: bool = False
     hotel_preference: Optional[str] = None
+    start_date: Optional[date] = None
     missing_fields: List[str] = Field(default_factory=list)
     clarification_question: Optional[str] = None
     response_text: Optional[str] = None

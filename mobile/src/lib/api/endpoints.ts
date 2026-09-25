@@ -105,6 +105,7 @@ export const API_ENDPOINTS = {
   // ============================================
   AI: {
     SUGGEST_ITINERARY: "/ai/itineraries/suggest",
+    PLAN_GENERATE: "/api/ai/plan",
   },
 
   // ============================================
@@ -187,6 +188,7 @@ export const API_ENDPOINTS = {
   // ============================================
   AI: {
     SUGGEST_ITINERARY: "/ai/itineraries/suggest",
+    PLAN_GENERATE: "/api/ai/plan",
   },
 
   // ============================================

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import time
 from typing import List, Literal, Optional
+
 from pydantic import BaseModel, Field, model_validator
+
 from app.schemas.common import Provenance
 
 

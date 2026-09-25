@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Literal, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -30,7 +31,13 @@ class Provenance(BaseModel):
 
 
 class AgentError(BaseModel):
-    agent_name: Literal["Supervisor", "DestinationAgent", "ItineraryAgent", "BudgetAgent"]
+    agent_name: Literal[
+        "Supervisor",
+        "DestinationAgent",
+        "ItineraryAgent",
+        "BudgetAgent",
+        "GraphOrchestrator",
+    ]
     error_code: str = Field(..., min_length=1)
     message: str = Field(..., min_length=1)
     timestamp: str = Field(default_factory=utc_now_iso)
@@ -40,7 +47,14 @@ class AgentError(BaseModel):
 class AgentTraceLog(BaseModel):
     agent_name: str
     stage: str
-    status: Literal["STARTED", "RUNNING", "COMPLETED", "FAILED", "OPTIMIZING", "SKIPPED"]
+    status: Literal[
+        "STARTED",
+        "RUNNING",
+        "COMPLETED",
+        "FAILED",
+        "OPTIMIZING",
+        "SKIPPED",
+    ]
     message: str
     duration_ms: Optional[int] = Field(default=None, ge=0)
     timestamp: str = Field(default_factory=utc_now_iso)

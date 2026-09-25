@@ -5,6 +5,7 @@ import { AppState, AppStateStatus } from "react-native";
 import { stompClient } from "./stompClient";
 import type {
     AckEvent,
+    AIPlanProgressEvent,
     ChannelEventPayload,
     ChatMessageEvent,
     ChatMessageWsEvent,
@@ -194,6 +195,34 @@ class WebSocketService {
 
     if (subscription) {
       this.activeSubscriptions.set(`channel-${conversationId}`, subscription);
+    }
+
+    return subscription;
+  }
+
+  /**
+   * Subscribe to realtime AI plan progress for the authenticated user.
+   * Destination: /user/queue/ai-plan-progress
+   */
+  subscribeToAIPlanProgress(
+    onProgress: (event: AIPlanProgressEvent) => void,
+  ): StompSubscription | null {
+    const destination = "/user/queue/ai-plan-progress";
+    const existingKey = "user-ai-plan-progress";
+    const existing = this.activeSubscriptions.get(existingKey);
+
+    if (existing) {
+      existing.unsubscribe();
+      this.activeSubscriptions.delete(existingKey);
+    }
+
+    const subscription = stompClient.subscribeRaw<AIPlanProgressEvent>(
+      destination,
+      onProgress,
+    );
+
+    if (subscription) {
+      this.activeSubscriptions.set(existingKey, subscription);
     }
 
     return subscription;

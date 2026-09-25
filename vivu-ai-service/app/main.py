@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.graph.travel_graph import travel_graph
 from app.models.state import MAX_OPTIMIZATION_LOOPS, TravelPlanState
 from app.schemas.api import APIErrorResponse, PlanGenerateRequest, PlanGenerateResponse
+from app.tools.progress import reset_progress_context, set_progress_context
 
 logging.basicConfig(level=getattr(logging, settings.log_level, logging.INFO))
 logger = logging.getLogger(__name__)
@@ -71,7 +72,9 @@ def _initial_state(request: PlanGenerateRequest) -> TravelPlanState:
     response_model=PlanGenerateResponse,
     responses={422: {"model": APIErrorResponse}, 500: {"model": APIErrorResponse}},
 )
-def generate_trip_plan(request: PlanGenerateRequest):
+def generate_trip_plan(request: PlanGenerateRequest, http_request: Request):
+    request_id = http_request.headers.get("X-Request-ID") or request.session_id
+    progress_token = set_progress_context(request.session_id, request_id)
     try:
         final_state = travel_graph.invoke(_initial_state(request))
     except Exception:
@@ -84,6 +87,8 @@ def generate_trip_plan(request: PlanGenerateRequest):
                 session_id=request.session_id,
             ).model_dump(),
         )
+    finally:
+        reset_progress_context(progress_token)
 
     errors = final_state.get("errors", [])
     fatal_error = any(not error.recoverable for error in errors)

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "AI Itinerary", description = "AI-powered travel itinerary generation")
+@Deprecated
 public class AIItineraryController {
 
     AIItineraryService aiItineraryService;
@@ -36,6 +37,8 @@ public class AIItineraryController {
      * @param request user preferences including mood, location, and constraints
      * @return suggested itinerary with optimized route
      */
+    /** @deprecated Use POST /api/ai/plan for the new Multi-Agent Python flow. */
+    @Deprecated
     @PostMapping("/itineraries/suggest")
     @Operation(summary = "Generate AI itinerary suggestion", description = "Creates a personalized travel itinerary based on mood and preferences")
     public ResponseEntity<SuggestedItinerary> suggestItinerary(
