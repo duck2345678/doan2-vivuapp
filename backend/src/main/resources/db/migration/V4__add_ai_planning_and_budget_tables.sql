@@ -19,10 +19,10 @@ ALTER TABLE tour_stops
   ADD COLUMN IF NOT EXISTS cost_estimate BIGINT,
   ADD COLUMN IF NOT EXISTS category VARCHAR(20);
 
--- 3. Bảng mới budget_breakdowns (lưu kết quả phân bổ ngân sách từ Budget Agent)
+-- 3. Bảng mới budget_breakdowns (lưu kết quả phân bổ ngân sách từ Budget Agent, quan hệ 1-1 với tour)
 CREATE TABLE IF NOT EXISTS budget_breakdowns (
     id BIGSERIAL PRIMARY KEY,
-    tour_id BIGINT REFERENCES tours(id) ON DELETE CASCADE,
+    tour_id BIGINT UNIQUE REFERENCES tours(id) ON DELETE CASCADE,
     transport BIGINT DEFAULT 0,
     accommodation BIGINT DEFAULT 0,
     food BIGINT DEFAULT 0,
@@ -59,6 +59,5 @@ CREATE TABLE IF NOT EXISTS ai_planning_sessions (
 );
 
 -- 6. Indexes phục vụ truy vấn tối ưu
-CREATE INDEX IF NOT EXISTS idx_budget_breakdowns_tour_id ON budget_breakdowns(tour_id);
 CREATE INDEX IF NOT EXISTS idx_ai_planning_sessions_user_id ON ai_planning_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_ai_planning_sessions_tour_id ON ai_planning_sessions(tour_id);

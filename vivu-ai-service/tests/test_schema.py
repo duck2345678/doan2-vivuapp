@@ -142,6 +142,8 @@ def test_travel_plan_state_instantiation():
         "user_id": "user_456",
         "raw_prompt": "Đi Đà Lạt 3N2Đ",
         "user_preferences": None,
+        "intent": None,
+        "clarification_question": None,
         "parsed_request": None,
         "candidate_pool": [],
         "selected_place_ids": [],
@@ -151,7 +153,7 @@ def test_travel_plan_state_instantiation():
         "optimization_targets": [],
         "optimization_context": None,
         "loop_count": 0,
-        "max_loops": 2,
+        "max_loops": 3,
         "optimization_exhausted": False,
         "trace_logs": [],
         "warnings": [],
@@ -161,4 +163,60 @@ def test_travel_plan_state_instantiation():
     }
     assert state["session_id"] == "sess_123"
     assert state["loop_count"] == 0
+    assert state["max_loops"] == 3
     assert state["optimization_exhausted"] is False
+
+def test_time_slot_regex_validation():
+    # Đúng chuẩn HH:MM 24h
+    slot = TimeSlot(
+        slot_type="MORNING",
+        start_time="08:30",
+        end_time="10:00",
+        place_id="P1",
+        place_name="Cafe",
+    )
+    assert slot.start_time == "08:30"
+
+    # Sai format (8 AM, 8h30, 25:00) -> Phải ném ValidationError
+    with pytest.raises(ValidationError):
+        TimeSlot(slot_type="MORNING", start_time="8 AM", end_time="10:00", place_id="P1", place_name="Cafe")
+
+    with pytest.raises(ValidationError):
+        TimeSlot(slot_type="MORNING", start_time="8h30", end_time="10:00", place_id="P1", place_name="Cafe")
+
+    with pytest.raises(ValidationError):
+        TimeSlot(slot_type="MORNING", start_time="25:00", end_time="10:00", place_id="P1", place_name="Cafe")
+
+def test_place_coordinates_range_validation():
+    # Tọa độ hợp lệ
+    p = PlaceCandidate(
+        place_id="P1",
+        name="Place",
+        category="ATTRACTION",
+        latitude=11.94,
+        longitude=108.43,
+        provenance=Provenance(source="GOOGLE_PLACES"),
+    )
+    assert p.latitude == 11.94
+
+    # Latitude vượt quá 90 độ
+    with pytest.raises(ValidationError):
+        PlaceCandidate(
+            place_id="P1",
+            name="Place",
+            category="ATTRACTION",
+            latitude=95.0,
+            longitude=108.43,
+            provenance=Provenance(source="GOOGLE_PLACES"),
+        )
+
+    # Longitude vượt quá 180 độ
+    with pytest.raises(ValidationError):
+        PlaceCandidate(
+            place_id="P1",
+            name="Place",
+            category="ATTRACTION",
+            latitude=11.94,
+            longitude=-190.0,
+            provenance=Provenance(source="GOOGLE_PLACES"),
+        )

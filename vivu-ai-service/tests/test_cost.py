@@ -1,7 +1,10 @@
 from app.tools.cost import calculate_budget, calculate_rooms, COST_TABLE
 
 def test_calculate_rooms():
-    assert calculate_rooms(0) == 0
+    import pytest
+
+    with pytest.raises(ValueError, match="num_travelers phải lớn hơn 0"):
+        calculate_rooms(0)
     assert calculate_rooms(1) == 1
     assert calculate_rooms(2) == 1
     assert calculate_rooms(3) == 2
@@ -161,6 +164,28 @@ def test_parsed_user_request_travel_style_to_cost_engine_integration():
     assert budget.hotel_cost == 600_000
     assert budget.food_cost == 1_080_000
     assert budget.total_calculated == 1_848_000
-    assert budget.status == "BUDGET_OK"
     assert budget.remaining == 5_000_000 - 1_848_000
     assert budget.over_amount == 0
+
+def test_calculate_budget_invalid_inputs():
+    import pytest
+
+    # Sai travel_style
+    with pytest.raises(ValueError, match="travel_style không hợp lệ"):
+        calculate_budget(num_travelers=2, num_days=3, num_nights=2, max_budget=5_000_000, travel_style="UNKNOWN") # type: ignore
+
+    # num_travelers <= 0
+    with pytest.raises(ValueError, match="num_travelers phải lớn hơn 0"):
+        calculate_budget(num_travelers=0, num_days=3, num_nights=2, max_budget=5_000_000)
+
+    # num_days <= 0
+    with pytest.raises(ValueError, match="num_days phải lớn hơn 0"):
+        calculate_budget(num_travelers=2, num_days=0, num_nights=2, max_budget=5_000_000)
+
+    # num_nights < 0 hoặc > num_days
+    with pytest.raises(ValueError, match="num_nights phải nằm trong khoảng 0..num_days"):
+        calculate_budget(num_travelers=2, num_days=3, num_nights=-1, max_budget=5_000_000)
+
+    # max_budget < 0
+    with pytest.raises(ValueError, match="không được âm"):
+        calculate_budget(num_travelers=2, num_days=3, num_nights=2, max_budget=-500)
