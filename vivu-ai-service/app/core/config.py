@@ -21,6 +21,13 @@ class Settings(BaseModel):
         gt=0,
         le=30,
     )
+    osrm_base_url: str = os.getenv("OSRM_BASE_URL", "http://localhost:5000").strip()
+    osrm_timeout_seconds: float = Field(
+        default_factory=lambda: float(os.getenv("OSRM_TIMEOUT_SECONDS", "5.0")),
+        gt=0,
+        le=30,
+    )
+
 
 
 settings = Settings()

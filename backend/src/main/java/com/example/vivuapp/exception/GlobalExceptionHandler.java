@@ -4,6 +4,7 @@ import com.example.vivuapp.exception.exceptionImpl.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import com.example.vivuapp.exception.GeocodingProviderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -193,6 +194,19 @@ public class GlobalExceptionHandler {
                 ErrorResponse error = ErrorResponse.builder()
                                 .status(HttpStatus.BAD_GATEWAY.value())
                                 .errorCode(ex.getErrorCode())
+                                .error("Bad Gateway")
+                                .message(ex.getMessage())
+                                .path(req.getDescription(false).replace("uri=", ""))
+                                .build();
+                return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+        }
+
+        @ExceptionHandler(GeocodingProviderException.class)
+        public ResponseEntity<ErrorResponse> handleGeocodingProviderException(
+                        GeocodingProviderException ex, WebRequest req) {
+                ErrorResponse error = ErrorResponse.builder()
+                                .status(HttpStatus.BAD_GATEWAY.value())
+                                .errorCode("GEOCODING_PROVIDER_ERROR")
                                 .error("Bad Gateway")
                                 .message(ex.getMessage())
                                 .path(req.getDescription(false).replace("uri=", ""))

@@ -28,6 +28,10 @@ class PlaceCandidate(BaseModel):
     opening_hours: Optional[Dict[str, Any]] = None
     # Google currentOpeningHours: 7-day window including special-day adjustments.
     current_opening_hours: Optional[Dict[str, Any]] = None
+    opening_hours_text: Optional[str] = Field(
+        default=None,
+        description="Raw opening hours string, ví dụ từ OSM 'Mo-Su 08:00-22:00'.",
+    )
     business_status: Optional[BusinessStatus] = None
 
     estimated_cost_per_person: Optional[int] = Field(

@@ -6,6 +6,7 @@ import re
 from typing import Any, List, Optional
 
 import httpx
+import time
 
 from app.core.config import settings
 from app.data.offline_places import OFFLINE_PLACES_DATA
@@ -43,10 +44,21 @@ class PlacesProvider(ABC):
 
 
 class OfflinePlacesProvider(PlacesProvider):
+    def __init__(self, fallback_provider: Optional[PlacesProvider] = None):
+        self.fallback = fallback_provider
+
     def search_places(
         self,
         city: str,
         categories: Optional[List[str]] = None,
+    ) -> List[PlaceCandidate]:
+        return self.search_places_for_capacity(city, categories)
+
+    def search_places_for_capacity(
+        self,
+        city: str,
+        categories: Optional[List[str]] = None,
+        max_results: Optional[int] = None,
     ) -> List[PlaceCandidate]:
         matched_city = next(
             (
@@ -58,30 +70,87 @@ class OfflinePlacesProvider(PlacesProvider):
             ),
             None,
         )
-        if not matched_city:
-            logger.warning("Offline catalog không có dữ liệu cho %s", city)
-            return []
+        
+        candidates: List[PlaceCandidate] = []
+        if matched_city:
+            candidates = [c.model_copy(deep=True) for c in OFFLINE_PLACES_DATA[matched_city]]
 
-        candidates = OFFLINE_PLACES_DATA[matched_city]
         if categories:
-            allowed = {category.upper() for category in categories}
-            candidates = [
-                candidate
-                for candidate in candidates
-                if (candidate.category or "").upper() in allowed
-            ]
-        return [candidate.model_copy(deep=True) for candidate in candidates]
+            allowed = {c.upper() for c in categories}
+            candidates = [c for c in candidates if (c.category or "").upper() in allowed]
 
-    def search_places_for_capacity(
-        self,
-        city: str,
-        categories: Optional[List[str]] = None,
-        max_results: Optional[int] = None,
-    ) -> List[PlaceCandidate]:
-        results = self.search_places(city, categories)
-        if max_results is None or max_results <= 0:
-            return results
-        return results[:max_results]
+        # Calculate quota per category
+        requested_capacity = max_results or 20
+        cats_to_fetch = categories or ["HOTEL", "RESTAURANT", "CAFE", "ATTRACTION"]
+        quota_per_cat = max(1, requested_capacity // len(cats_to_fetch)) if cats_to_fetch else requested_capacity
+        
+        current_counts = {}
+        for c in candidates:
+            cat = (c.category or "").upper()
+            current_counts[cat] = current_counts.get(cat, 0) + 1
+            
+        missing_categories = []
+        for cat in cats_to_fetch:
+            if current_counts.get(cat, 0) < quota_per_cat:
+                missing_categories.append(cat)
+                
+        if missing_categories and self.fallback:
+            logger.info(f"Offline catalog thiếu các category {missing_categories} cho {city}. Gọi fallback.")
+            fallback_candidates = self.fallback.search_places_for_capacity(
+                city=city,
+                categories=missing_categories,
+                max_results=len(missing_categories) * quota_per_cat
+            )
+            candidates = self._merge_and_deduplicate(candidates, fallback_candidates)
+            
+        if max_results and max_results > 0:
+            final_selection = []
+            selected_ids = set()
+            
+            # Step 1: Fill up to quota_per_cat for each requested category
+            for cat in cats_to_fetch:
+                count = 0
+                for c in candidates:
+                    if count >= quota_per_cat:
+                        break
+                    if len(final_selection) >= max_results:
+                        break
+                    if (c.category or "").upper() == cat and c.place_id not in selected_ids:
+                        final_selection.append(c)
+                        selected_ids.add(c.place_id)
+                        count += 1
+                        
+            # Step 2: Fill remaining capacity with any remaining candidates
+            for c in candidates:
+                if len(final_selection) >= max_results:
+                    break
+                if c.place_id not in selected_ids:
+                    final_selection.append(c)
+                    selected_ids.add(c.place_id)
+                    
+            return final_selection
+            
+        return candidates
+
+    def _merge_and_deduplicate(self, primary: List[PlaceCandidate], fallback: List[PlaceCandidate]) -> List[PlaceCandidate]:
+        from app.tools.routes import haversine_km
+        merged = list(primary)
+        
+        for f in fallback:
+            is_dup = False
+            for p in primary:
+                if p.place_id == f.place_id:
+                    is_dup = True
+                    break
+                # Proximity & name match deduction
+                if p.name.lower() == f.name.lower():
+                    dist = haversine_km(p.latitude, p.longitude, f.latitude, f.longitude)
+                    if dist < 0.2:  # 200m
+                        is_dup = True
+                        break
+            if not is_dup:
+                merged.append(f)
+        return merged
 
 
 class GooglePlacesProvider(PlacesProvider):
@@ -539,5 +608,240 @@ class GooglePlacesProvider(PlacesProvider):
         return interests
 
 
+class OSMPlacesProvider(PlacesProvider):
+    OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+    DEFAULT_CITY_CENTERS = {
+        "hồ chí minh": (10.7769, 106.7009),
+        "ho chi minh": (10.7769, 106.7009),
+        "hà nội": (21.0285, 105.8542),
+        "ha noi": (21.0285, 105.8542),
+        "đà nẵng": (16.0544, 108.2022),
+        "da nang": (16.0544, 108.2022),
+        "đà lạt": (11.9404, 108.4583),
+        "da lat": (11.9404, 108.4583),
+        "nha trang": (12.2451, 109.1943),
+        "vũng tàu": (10.3460, 107.0843),
+        "vung tau": (10.3460, 107.0843),
+        "phú quốc": (10.2289, 103.9573),
+        "phu quoc": (10.2289, 103.9573),
+    }
+
+    def __init__(self, fallback_provider: Optional[PlacesProvider] = None, http_client: Optional[httpx.Client] = None):
+        self.fallback = fallback_provider
+        timeout = getattr(settings, "osm_timeout_seconds", 15.0)
+        # Using a distinct client for OSM to respect timeout and connection pooling
+        self._http_client = http_client or httpx.Client(timeout=timeout)
+
+    def search_places(self, city: str, categories: Optional[List[str]] = None) -> List[PlaceCandidate]:
+        return self.search_places_for_capacity(city, categories)
+
+    def search_places_for_capacity(self, city: str, categories: Optional[List[str]] = None, max_results: Optional[int] = None) -> List[PlaceCandidate]:
+        center = self._get_city_center(city)
+        if not center:
+            logger.warning(f"OSMPlacesProvider: Không tìm thấy center cho city={city}. Bỏ qua OSM.")
+            return self.fallback.search_places_for_capacity(city, categories, max_results) if self.fallback else []
+            
+        lat, lon = center
+        radius_km = getattr(settings, "osm_search_radius_km", 10)
+        radius_m = int(radius_km * 1000)
+        
+        limit_total = max_results or 50
+        cats_to_fetch = categories or ["HOTEL", "RESTAURANT", "CAFE", "ATTRACTION"]
+        quota_per_cat = max(1, limit_total // len(cats_to_fetch)) if cats_to_fetch else 20
+        
+        query = self._build_overpass_query(lat, lon, radius_m, cats_to_fetch, quota_per_cat)
+        if not query:
+            return []
+            
+        candidates = []
+        try:
+            # Respect public Overpass limits slightly with sequential boundary
+            time.sleep(0.5)
+            response = self._http_client.post(self.OVERPASS_URL, data={"data": query})
+            response.raise_for_status()
+            data = response.json()
+            
+            elements = data.get("elements", [])
+            for el in elements:
+                candidate = self._normalize_osm_place(el)
+                if candidate:
+                    candidates.append(candidate)
+                    
+        except httpx.HTTPStatusError as exc:
+            logger.warning(f"OSMPlacesProvider: Overpass HTTP error {exc.response.status_code}")
+        except Exception as exc:
+            logger.exception("OSMPlacesProvider: Lỗi khi truy vấn Overpass API")
+            
+        if not candidates and self.fallback:
+            return self.fallback.search_places_for_capacity(city, categories, max_results)
+            
+        # Deduplicate internally
+        seen = set()
+        deduped = []
+        for c in candidates:
+            if c.place_id not in seen:
+                seen.add(c.place_id)
+                deduped.append(c)
+                
+        # Optional fallback to Google if OSM is also lacking
+        if self.fallback and len(deduped) < limit_total:
+            fallback_res = self.fallback.search_places_for_capacity(city, categories, limit_total - len(deduped))
+            # Merge with fallback (Offline already merged OSM, now OSM merges Google)
+            from app.tools.routes import haversine_km
+            for f in fallback_res:
+                is_dup = False
+                for p in deduped:
+                    if p.place_id == f.place_id:
+                        is_dup = True
+                        break
+                    if p.name.lower() == f.name.lower():
+                        if haversine_km(p.latitude, p.longitude, f.latitude, f.longitude) < 0.2:
+                            is_dup = True
+                            break
+                if not is_dup:
+                    deduped.append(f)
+            
+        return deduped[:limit_total] if max_results else deduped
+
+    def _get_city_center(self, city: str) -> Optional[tuple[float, float]]:
+        c = city.casefold()
+        centers = getattr(settings, "osm_city_centers", self.DEFAULT_CITY_CENTERS)
+        for k, v in centers.items():
+            if k in c or c in k:
+                return v
+        return None
+
+    def _build_overpass_query(self, lat: float, lon: float, radius: int, categories: List[str], limit_per_cat: int) -> str:
+        statements = []
+        cats = [c.upper() for c in categories]
+        
+        if "CAFE" in cats:
+            statements.append(f'( nwr["amenity"="cafe"](around:{radius},{lat},{lon}); ); out center {limit_per_cat};')
+        if "RESTAURANT" in cats:
+            statements.append(f'( nwr["amenity"~"restaurant|fast_food"](around:{radius},{lat},{lon}); ); out center {limit_per_cat};')
+        if "HOTEL" in cats:
+            statements.append(f'( nwr["tourism"~"hotel|hostel|guest_house|motel"](around:{radius},{lat},{lon}); ); out center {limit_per_cat};')
+        if "ATTRACTION" in cats:
+            statements.append(
+                f'(\n  nwr["tourism"~"museum|attraction|viewpoint|gallery|theme_park"](around:{radius},{lat},{lon});\n'
+                f'  nwr["historic"~"monument|memorial|ruins"](around:{radius},{lat},{lon});\n); out center {limit_per_cat};'
+            )
+            
+        if not statements:
+            return ""
+            
+        query = "[out:json][timeout:15];\n" + "\n".join(statements)
+        return query
+
+    def _normalize_osm_place(self, el: dict) -> Optional[PlaceCandidate]:
+        try:
+            tags = el.get("tags", {})
+            name = tags.get("name") or tags.get("name:en")
+            if not name:
+                return None
+                
+            lat = el.get("lat")
+            if lat is None:
+                lat = (el.get("center") or {}).get("lat")
+                
+            lon = el.get("lon")
+            if lon is None:
+                lon = (el.get("center") or {}).get("lon")
+                
+            if lat is None or lon is None:
+                return None
+                
+            el_id = el.get("id")
+            place_id = f"osm_{el.get('type')}_{el_id}"
+            
+            metadata = {}
+            
+            amenity = tags.get("amenity")
+            tourism = tags.get("tourism")
+            
+            if amenity == "cafe":
+                category = "CAFE"
+            elif amenity in ["restaurant", "fast_food"]:
+                category = "RESTAURANT"
+            elif tourism in ["hotel", "hostel", "guest_house", "motel"]:
+                category = "HOTEL"
+                metadata["accommodation_type"] = tourism.upper()
+            else:
+                category = "ATTRACTION"
+                
+            address = tags.get("addr:street", "")
+            if "addr:housenumber" in tags:
+                address = f"{tags['addr:housenumber']} {address}"
+                
+            opening_hours = tags.get("opening_hours")
+            
+            # NOTE: Rating and price/fee are explicitly set to None (Unknown).
+            # business_status=None to avoid faking operational status.
+            return PlaceCandidate(
+                place_id=place_id,
+                name=name,
+                category=category,
+                interests=self._extract_interests_from_osm_tags(tags, category),  
+                rating=None,   
+                user_ratings_total=0,
+                address=address.strip(),
+                latitude=float(lat),
+                longitude=float(lon),
+                opening_hours=None,
+                current_opening_hours=None,
+                opening_hours_text=opening_hours,
+                business_status=None, 
+                estimated_cost_per_person=None,
+                ticket_price=None,
+                estimated_room_cost_per_night=None,
+                provenance=Provenance(
+                    source="OSM_OVERPASS",
+                    source_id=place_id,
+                    retrieved_at=utc_now_iso(),
+                    is_estimate=True
+                ),
+            )
+        except (TypeError, ValueError, AttributeError):
+            logger.debug("Bỏ qua OSM Place có format không hợp lệ", exc_info=True)
+            return None
+
+    def _extract_interests_from_osm_tags(self, tags: dict, category: str) -> List[str]:
+        interests = set()
+        tourism = tags.get("tourism", "")
+        
+        if category == "CAFE":
+            interests.add("CAFE")
+        elif category == "RESTAURANT":
+            interests.add("FOOD")
+        elif category == "ATTRACTION":
+            if tourism in ["museum", "gallery"]:
+                interests.add("CULTURE")
+            elif tourism in ["viewpoint"]:
+                interests.add("CHECKIN")
+            if "historic" in tags:
+                interests.add("CULTURE")
+            if tags.get("natural") == "beach":
+                interests.update(["NATURE", "BEACH"])
+            if tags.get("leisure") == "park":
+                interests.add("NATURE")
+        return list(interests)
+
+
+_default_places_provider: Optional[PlacesProvider] = None
+
 def get_default_places_provider() -> PlacesProvider:
-    return GooglePlacesProvider()
+    global _default_places_provider
+    if _default_places_provider is None:
+        use_google = getattr(settings, "use_google_places_fallback", False)
+        
+        # 1. OPTIONAL/LEGACY: GooglePlacesProvider (chỉ bật khi có cờ)
+        google_fallback = GooglePlacesProvider() if use_google else None
+        
+        # 2. FILL GAP: OSMPlacesProvider
+        osm_fallback = OSMPlacesProvider(fallback_provider=google_fallback)
+        
+        # 3. PRIMARY: OfflinePlacesProvider
+        _default_places_provider = OfflinePlacesProvider(fallback_provider=osm_fallback)
+        
+    return _default_places_provider

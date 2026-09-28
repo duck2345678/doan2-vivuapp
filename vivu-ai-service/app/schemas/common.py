@@ -24,6 +24,8 @@ class Provenance(BaseModel):
         "INTERNAL_DATABASE",
         "INTERNAL_ESTIMATE",
         "USER_INPUT",
+        "OSM_OVERPASS",
+        "OSRM",
     ]
     source_id: Optional[str] = None
     retrieved_at: str = Field(default_factory=utc_now_iso)

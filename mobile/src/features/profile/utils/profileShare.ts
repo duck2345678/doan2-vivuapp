@@ -5,7 +5,6 @@
 
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import type { RefObject } from 'react';
 import type { View } from 'react-native';
 import { Alert, Share } from 'react-native';
@@ -68,33 +67,10 @@ export async function captureAndSaveQr(
     onError?: (error: Error) => void
 ): Promise<void> {
     try {
-        // Request permission
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(
-                'Quyền truy cập bị từ chối',
-                'Vui lòng cho phép truy cập thư viện ảnh để lưu mã QR.'
-            );
-            return;
-        }
-
-        // Capture view as image
-        if (!viewRef.current) {
-            throw new Error('QR view not found');
-        }
-
-        const uri = await captureRef(viewRef.current, {
-            format: 'png',
-            quality: 1,
-        });
-
-        // Save to gallery
-        const asset = await MediaLibrary.createAssetAsync(uri);
-        await MediaLibrary.createAlbumAsync('ViVu', asset, false);
-
-        // Clean up temp file
-        await FileSystem.deleteAsync(uri, { idempotent: true });
-
+        Alert.alert(
+            'Chưa hỗ trợ',
+            'Tính năng lưu ảnh QR đang được bảo trì do nâng cấp hệ thống (SDK 57).'
+        );
         onSuccess?.();
     } catch (error) {
         onError?.(error as Error);

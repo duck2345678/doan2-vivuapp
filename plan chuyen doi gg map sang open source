@@ -1,0 +1,716 @@
+# KẾ HOẠCH CHUYỂN ĐỔI NỀN TẢNG BẢN ĐỒ SANG HỆ SINH THÁI OPEN SOURCE
+
+## Mục tiêu
+
+Chuyển ViVu từ hệ sinh thái Google Maps/Places/Routes sang kiến trúc sử dụng OpenStreetMap và các thành phần mã nguồn mở hoặc self-hosted, nhằm:
+
+* giảm hoặc loại bỏ chi phí API của Google;
+* giảm vendor lock-in;
+* giữ nguyên logic của Supervisor, Destination, Itinerary và Budget Agent;
+* không phá vỡ Provider Pattern hiện tại;
+* cho phép thay đổi nhà cung cấp dữ liệu mà không sửa AI Agent;
+* kiểm soát tốt hơn cache, provenance và dữ liệu địa điểm.
+
+Kiến trúc migration không thay đổi contract của Agent. Chỉ thay implementation bên dưới các interface `PlacesProvider` và `RoutesProvider`.
+
+---
+
+# GIAI ĐOẠN 0 — ỔN ĐỊNH MOBILE BASELINE
+
+## Mục tiêu
+
+Ổn định Expo/React Native trước khi thay native map library.
+
+## Công việc
+
+* Đồng bộ Expo SDK, React Native và Expo Router.
+* Xóa `node_modules` và cài dependency sạch.
+* Chạy `expo-doctor`.
+* Đảm bảo Android runtime khớp Expo SDK.
+* Xác nhận app build được trước khi thay `react-native-maps`.
+
+## Điều kiện hoàn thành
+
+```text
+Expo bundling      ✅
+TypeScript         ✅
+Android build      ✅
+Existing screens   ✅
+```
+
+Không thực hiện MapLibre migration trước khi baseline này ổn định.
+
+---
+
+# GIAI ĐOẠN 1 — BACKEND AI: ROUTING
+
+## 1.1. Chuẩn hóa RoutesProvider
+
+Giữ interface:
+
+```text
+RoutesProvider
+```
+
+và triển khai:
+
+```text
+OSRMRoutesProvider
+```
+
+Provider mặc định:
+
+```text
+OSRMRoutesProvider
+```
+
+Google/ORS chỉ tồn tại dưới dạng optional provider trong quá trình migration hoặc fallback tương lai.
+
+## 1.2. Self-host OSRM
+
+Không dùng public OSRM demo làm dependency production.
+
+Kiến trúc:
+
+```text
+OSRM Docker
+     ↓
+http://osrm:5000
+```
+
+OSRM cung cấp:
+
+```text
+route
+table
+trip
+nearest
+```
+
+và được sử dụng để thay thế khoảng cách/thời gian từ Google Routes.
+
+## 1.3. Chuẩn hóa RouteResult
+
+RoutesProvider nên trả về dữ liệu có:
+
+```text
+distance_km
+duration_minutes
+geometry
+provider
+is_estimate
+```
+
+Trong đó:
+
+```text
+provider = OSRM
+is_estimate = false
+```
+
+khi OSRM trả về route thành công.
+
+## 1.4. Đảm bảo mọi thành phần dùng cùng một nguồn routing
+
+```text
+Itinerary planning
+        ↓
+OSRM
+
+Itinerary validation
+        ↓
+OSRM
+
+Budget transport calculation
+        ↓
+OSRM
+```
+
+Không sử dụng Haversine làm giá trị cuối cùng nếu đã có road route.
+
+Haversine chỉ có thể dùng làm pre-filter hoặc estimate phụ trợ.
+
+## 1.5. Hardening
+
+Thêm:
+
+```text
+connect timeout
+read timeout
+retry giới hạn
+cache
+circuit breaker/fallback
+structured logging
+```
+
+Không retry vô hạn.
+
+## Điều kiện hoàn thành
+
+```text
+OSRM route              ✅
+OSRM table              ✅
+Distance                ✅
+Duration                ✅
+Geometry                ✅
+Budget transport        ✅
+Itinerary validation    ✅
+Existing tests          ✅
+```
+
+---
+
+# GIAI ĐOẠN 2 — BACKEND AI: POI / PLACE DATA
+
+## 2.1. Offline Catalog là nguồn chính
+
+Kiến trúc:
+
+```text
+OfflinePlacesProvider
+        ↓
+Destination Agent
+```
+
+Seed data nên được chuẩn hóa thành:
+
+```text
+place_id
+name
+category
+latitude
+longitude
+address
+opening_hours
+rating
+ticket_price
+price_level
+business_status
+source
+last_verified_at
+is_estimate
+```
+
+Các field không có dữ liệu phải giữ:
+
+```text
+null / unknown
+```
+
+Không chuyển unknown thành:
+
+```text
+0
+```
+
+## 2.2. Dữ liệu OSM được import vào Catalog
+
+Không để Agent phụ thuộc trực tiếp vào Overpass ở mọi request.
+
+Luồng:
+
+```text
+OSM data
+   ↓
+Import / normalization
+   ↓
+Offline Catalog
+   ↓
+Destination Agent
+```
+
+Có thể giới hạn dữ liệu theo:
+
+```text
+Việt Nam
+Đà Lạt
+Đà Nẵng
+Hà Nội
+TP.HCM
+Nha Trang
+Phú Quốc
+...
+```
+
+thay vì tải toàn bộ planet.
+
+## 2.3. OSM fallback
+
+Tạo:
+
+```text
+OSMPlacesProvider
+```
+
+Provider này sử dụng Overpass để lấy POI khi Offline Catalog không đủ.
+
+Luồng:
+
+```text
+OfflinePlacesProvider
+        ↓
+candidate đủ?
+   ├── YES → return
+   └── NO
+        ↓
+OSMPlacesProvider
+        ↓
+normalize
+        ↓
+cache
+        ↓
+return
+```
+
+Overpass không được xem là database chính của hệ thống.
+
+## 2.4. Candidate normalization
+
+Mọi POI từ OSM phải được map về `PlaceCandidate` hiện tại của ViVu.
+
+Các field không có phải giữ unknown.
+
+Ví dụ:
+
+```text
+rating = null
+ticket_price = null
+business_status = OPERATIONAL/UNKNOWN
+```
+
+Không được giả định:
+
+```text
+null → 0
+```
+
+## 2.5. Provider priority
+
+Production/default:
+
+```text
+OfflinePlacesProvider
+        ↓
+OSMPlacesProvider
+```
+
+Google:
+
+```text
+GooglePlacesProvider
+```
+
+chỉ giữ tạm trong migration hoặc optional fallback.
+
+## Điều kiện hoàn thành
+
+```text
+Offline POI search       ✅
+OSM fallback             ✅
+Category filtering       ✅
+Opening hours            ✅
+Coordinate validation    ✅
+Unknown field handling   ✅
+Cache                    ✅
+Provider tests           ✅
+```
+
+---
+
+# GIAI ĐOẠN 3 — SEARCH / GEOCODING
+
+## 3.1. Không dùng public Nominatim cho client-side autocomplete
+
+Không triển khai:
+
+```text
+React Native
+    ↓
+Nominatim mỗi lần user gõ
+```
+
+## 3.2. Tách SearchProvider
+
+Tạo:
+
+```text
+GeocodingProvider
+```
+
+với implementation:
+
+```text
+PhotonGeocodingProvider
+```
+
+hoặc self-hosted Photon/Pelias trong tương lai.
+
+## 3.3. Search flow
+
+```text
+Mobile
+   ↓
+Spring Boot
+   ↓
+Geocoding endpoint
+   ↓
+Photon
+   ↓
+SearchResult
+```
+
+Search result chuẩn hóa:
+
+```text
+display_name
+latitude
+longitude
+city
+country
+osm_id
+source
+```
+
+## 3.4. Caching
+
+Cache các query phổ biến.
+
+Mobile chỉ gọi khi:
+
+```text
+query length >= 3
+```
+
+và có debounce.
+
+Backend phải:
+
+```text
+rate limit
+cache
+timeout
+fallback
+```
+
+## 3.5. Mục đích của search
+
+Search chỉ tạo ra tọa độ/địa điểm người dùng chọn.
+
+Không tự động đưa kết quả search vào AI Agent nếu user chưa chọn.
+
+---
+
+# GIAI ĐOẠN 4 — MOBILE MAP
+
+## 4.1. Development Build
+
+Cài:
+
+```text
+@maplibre/maplibre-react-native
+```
+
+và cấu hình Expo plugin.
+
+MapLibre cần native build, vì vậy không dùng Expo Go làm môi trường chính cho MapLibre.
+
+## 4.2. Build
+
+```text
+npx expo prebuild
+npx expo run:android
+```
+
+hoặc:
+
+```text
+eas build --profile development
+```
+
+## 4.3. Map renderer
+
+Thay:
+
+```text
+react-native-maps
+```
+
+bằng:
+
+```text
+@maplibre/maplibre-react-native
+```
+
+## 4.4. Tile provider
+
+### Demo/development
+
+Có thể sử dụng OpenFreeMap:
+
+```text
+OpenFreeMap
+   ↓
+MapLibre
+```
+
+không cần API key.
+
+### Self-host
+
+Khi cần tự chủ hoàn toàn:
+
+```text
+OSM
+ ↓
+OpenMapTiles / PMTiles
+ ↓
+Tile server / CDN
+ ↓
+MapLibre
+```
+
+Không coi `tile.openstreetmap.org` là tile infrastructure production của ViVu.
+
+## 4.5. Map features
+
+Implement lại:
+
+```text
+Marker
+Polyline
+Camera
+Selected Place
+Current Location
+Route Geometry
+Fit Bounds
+```
+
+## 4.6. Attribution
+
+Map luôn phải hiển thị attribution phù hợp với nguồn dữ liệu/style.
+
+---
+
+# GIAI ĐOẠN 5 — INTEGRATION VỚI AI AGENTS
+
+Sau khi Provider mới hoạt động:
+
+```text
+DestinationAgent
+      ↓
+Offline/OSM Places
+
+ItineraryAgent
+      ↓
+OSRM
+
+BudgetAgent
+      ↓
+OSRM
+      ↓
+deterministic transport cost
+```
+
+Không sửa logic nghiệp vụ của Agent nếu không cần thiết.
+
+Chỉ thay implementation của Provider.
+
+## Validation
+
+Chạy lại:
+
+```text
+pytest
+regression tests
+smoke tests
+optimization tests
+```
+
+và bổ sung:
+
+```text
+OSRM integration test
+OSM normalization test
+Opening-hours test
+Unknown-cost test
+Fallback test
+```
+
+---
+
+# GIAI ĐOẠN 6 — REMOVE GOOGLE
+
+Chỉ sau khi toàn bộ flow mới ổn định mới xóa:
+
+```text
+Google Places SDK/API
+Google Routes API
+Google Maps Android integration
+react-native-google-places-autocomplete
+```
+
+Có thể giữ Google provider trong code một thời gian dưới dạng:
+
+```text
+legacy / optional
+```
+
+để rollback.
+
+---
+
+# GIAI ĐOẠN 7 — POSTGIS / ADVANCED GEO DATA
+
+Giai đoạn này không phải prerequisite.
+
+Khi cần geospatial query nâng cao:
+
+```text
+PostgreSQL
+   ↓
+PostGIS
+```
+
+sử dụng cho:
+
+```text
+nearby places
+radius search
+spatial index
+ST_DWithin
+route corridor
+area filtering
+```
+
+Dữ liệu cơ bản vẫn có thể giữ:
+
+```text
+latitude
+longitude
+```
+
+trong giai đoạn đầu.
+
+---
+
+# KIẾN TRÚC CUỐI CÙNG
+
+```text
+                    ViVu Mobile
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+          MapLibre               Search
+              │                     │
+        OpenFreeMap /          Spring Boot
+        Self-host tiles             │
+                                    ▼
+                                Photon /
+                              Self-host Geo
+                                   
+                         Spring Boot
+                              │
+                              ▼
+                      Python AI Service
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+   Place Provider       Routes Provider      Cost Engine
+          │                   │
+          ▼                   ▼
+ Offline Catalog           OSRM
+          │
+          ▼
+    Overpass fallback
+          │
+          ▼
+        Cache
+```
+
+## Provider Strategy
+
+```text
+Places:
+Offline → OSM/Overpass → optional Google
+
+Routes:
+OSRM → optional ORS/Google
+
+Geocoding:
+Photon → self-hosted provider
+
+Map:
+MapLibre → OpenFreeMap/self-hosted tiles
+```
+
+## Nguyên tắc dữ liệu
+
+```text
+Unknown ≠ 0
+Estimate ≠ exact
+Cache ≠ permanently accurate
+OSM data ≠ Google Places data
+```
+
+Mọi dữ liệu bên ngoài cần lưu:
+
+```text
+source
+retrieved_at
+last_verified_at
+is_estimate
+```
+
+---
+
+# THỨ TỰ TRIỂN KHAI CHÍNH THỨC
+
+```text
+STEP 0
+Fix Expo / React Native baseline
+
+STEP 1
+OSRM Provider
+
+STEP 2
+Offline POI Catalog
+
+STEP 3
+Overpass ingestion/fallback
+
+STEP 4
+Photon geocoding/search
+
+STEP 5
+MapLibre Development Build
+
+STEP 6
+MapLibre + tile provider
+
+STEP 7
+End-to-end AI validation
+
+STEP 8
+Remove Google dependencies
+
+STEP 9
+Optional PostGIS
+```
+
+## Definition of Done
+
+Migration chỉ được coi là hoàn thành khi:
+
+```text
+AI plan generation              ✅
+Destination selection           ✅
+Itinerary routing               ✅
+Budget transport calculation    ✅
+Map rendering                   ✅
+Place search                    ✅
+Route visualization             ✅
+Offline POI fallback            ✅
+No Google API dependency        ✅
+Existing Phase 1–5 tests        ✅
+End-to-end flow                 ✅
+```

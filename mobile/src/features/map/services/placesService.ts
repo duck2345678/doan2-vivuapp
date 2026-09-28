@@ -10,6 +10,22 @@
 
 import { env } from '@/config/env';
 import { calculateHaversineDistance } from '@/lib/utils/haversine';
+import { apiClient } from '@/lib/api';
+
+// Geocoding Response from Spring Boot
+export interface GeocodingResult {
+    name: string;
+    displayName: string;
+    latitude: number;
+    longitude: number;
+    city: string;
+    country: string;
+    osmId: string;
+}
+
+export interface GeocodingResponse {
+    results: GeocodingResult[];
+}
 
 // ============================================================================
 // Types
@@ -103,6 +119,9 @@ const autocompleteCache = new Map<string, { data: PlacePrediction[]; timestamp: 
 const detailsCache = new Map<string, { data: PlaceDetails; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// We will also keep a temporary cache of the full GeocodingResult by osmId
+const geocodingCache = new Map<string, GeocodingResult>();
+
 function getCached<T>(cache: Map<string, { data: T; timestamp: number }>, key: string): T | null {
     const cached = cache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -138,66 +157,40 @@ export async function autocomplete(
     const cached = getCached(autocompleteCache, cacheKey);
     if (cached) return cached;
 
-    const apiKey = env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-        console.warn('Google Maps API key not configured');
-        return [];
-    }
-
     try {
-        const requestBody: Record<string, any> = {
-            input: query,
-            languageCode: options.language || 'vi',
-        };
-
-        // Add location bias if provided
-        if (options.location) {
-            requestBody.locationBias = {
-                circle: {
-                    center: {
-                        latitude: options.location.latitude,
-                        longitude: options.location.longitude,
-                    },
-                    radius: options.radius || 50000,
-                },
-            };
-        }
-
-        // Restrict to countries
-        if (options.countries && options.countries.length > 0) {
-            requestBody.includedRegionCodes = options.countries;
-        }
-
-        const response = await fetch(`${PLACES_API_BASE}/places:autocomplete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Goog-Api-Key': apiKey,
-            },
-            body: JSON.stringify(requestBody),
+        const queryParams = new URLSearchParams({
+            q: query,
+            limit: (options.limit || 5).toString(),
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Places API error: ${response.status} - ${errorText}`);
+        if (options.language) {
+            queryParams.append('lang', options.language);
+        }
+        if (options.location) {
+            queryParams.append('lat', options.location.latitude.toString());
+            queryParams.append('lon', options.location.longitude.toString());
         }
 
-        const data = await response.json();
+        const response = await apiClient.get<GeocodingResponse>(`/api/geocoding/search?${queryParams.toString()}`);
+        
+        if (!response || !response.results) {
+            return [];
+        }
 
-        const predictions: PlacePrediction[] = (data.suggestions || [])
-            .filter((s: any) => s.placePrediction)
-            .slice(0, options.limit || 5)
-            .map((suggestion: any) => {
-                const pred = suggestion.placePrediction;
-                return {
-                    placeId: pred.placeId,
-                    mainText: pred.structuredFormat?.mainText?.text || pred.text?.text || '',
-                    secondaryText: pred.structuredFormat?.secondaryText?.text || '',
-                    description: pred.text?.text || '',
-                    types: pred.types || [],
-                    distanceMeters: pred.distanceMeters,
-                };
-            });
+        const predictions: PlacePrediction[] = response.results.map((result) => {
+            // Store full result in temporary cache for getPlaceDetails
+            const placeId = result.osmId || `custom-${result.latitude}-${result.longitude}`;
+            geocodingCache.set(placeId, result);
+
+            return {
+                placeId: placeId,
+                mainText: result.name || result.displayName,
+                secondaryText: result.city && result.country ? `${result.city}, ${result.country}` : result.country || '',
+                description: result.displayName,
+                types: ['geocode'],
+                distanceMeters: undefined,
+            };
+        });
 
         setCache(autocompleteCache, cacheKey, predictions);
         return predictions;
@@ -214,78 +207,29 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
     const cached = getCached(detailsCache, placeId);
     if (cached) return cached;
 
-    const apiKey = env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-        console.warn('Google Maps API key not configured');
-        return null;
-    }
-
     try {
-        const fields = [
-            'id',
-            'displayName',
-            'formattedAddress',
-            'location',
-            'types',
-            'rating',
-            'userRatingCount',
-            'priceLevel',
-            'currentOpeningHours',
-            'photos',
-            'nationalPhoneNumber',
-            'websiteUri',
-            // Extended fields
-            'editorialSummary',
-            'businessStatus',
-            'internationalPhoneNumber',
-        ].join(',');
-
-        const response = await fetch(`${PLACES_API_BASE}/places/${placeId}`, {
-            method: 'GET',
-            headers: {
-                'X-Goog-Api-Key': apiKey,
-                'X-Goog-FieldMask': fields,
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Place Details API error: ${response.status} - ${errorText}`);
+        // Try to get from local geocoding cache first (populated by autocomplete)
+        const geocodingResult = geocodingCache.get(placeId);
+        
+        if (geocodingResult) {
+            const details: PlaceDetails = {
+                placeId: placeId,
+                name: geocodingResult.name || geocodingResult.displayName,
+                formattedAddress: geocodingResult.displayName,
+                location: {
+                    latitude: geocodingResult.latitude,
+                    longitude: geocodingResult.longitude,
+                },
+                types: ['geocode'],
+            };
+            setCache(detailsCache, placeId, details);
+            return details;
         }
-
-        const data = await response.json();
-
-        const details: PlaceDetails = {
-            placeId: data.id || placeId,
-            name: data.displayName?.text || '',
-            formattedAddress: data.formattedAddress || '',
-            location: {
-                latitude: data.location?.latitude || 0,
-                longitude: data.location?.longitude || 0,
-            },
-            types: data.types || [],
-            rating: data.rating,
-            userRatingCount: data.userRatingCount,
-            priceLevel: data.priceLevel,
-            openingHours: data.currentOpeningHours ? {
-                openNow: data.currentOpeningHours.openNow || false,
-                weekdayDescriptions: data.currentOpeningHours.weekdayDescriptions || [],
-            } : undefined,
-            photos: data.photos?.map((p: any) => ({
-                name: p.name,
-                widthPx: p.widthPx,
-                heightPx: p.heightPx,
-            })),
-            phoneNumber: data.nationalPhoneNumber,
-            website: data.websiteUri,
-            // Extended fields
-            editorialSummary: data.editorialSummary?.text,
-            businessStatus: data.businessStatus,
-            internationalPhoneNumber: data.internationalPhoneNumber,
-        };
-
-        setCache(detailsCache, placeId, details);
-        return details;
+        
+        // If not in cache, we could implement a reverse geocoding or lookup endpoint
+        // But for ViVu App's autocomplete flow, it should always be in cache
+        console.warn(`Place details not found in local cache for ID: ${placeId}`);
+        return null;
     } catch (error) {
         console.error('Place details error:', error);
         return null;
