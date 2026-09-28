@@ -51,8 +51,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${OAUTH2_CLIENT_GOOGLE_CLIENT_ID}
-            client-secret: ${OAUTH2_CLIENT_GOOGLE_CLIENT_SECRET}
+            client-id: ${OAUTH2_CLIENT_GOOGLE_CLIENT_ID:dummy-google-client-id}
+            client-secret: ${OAUTH2_CLIENT_GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
             scope:
               - openid
               - email
@@ -83,8 +83,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:dummy@gmail.com}
+    password: ${MAIL_PASSWORD:dummy}
     properties:
       mail:
         smtp:
@@ -102,7 +102,7 @@ spring:
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY}
+      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
       expiration: 86400000 # 1 ngày
       refresh-token:
         expiration: 604800000 # 7 ngày
@@ -111,18 +111,18 @@ application:
 
 # Cấu hình Cloudinary (Upload ảnh/video)
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME}
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dummy}
+  api-key: ${CLOUDINARY_API_KEY:dummy}
+  api-secret: ${CLOUDINARY_API_SECRET:dummy}
 
 # Google Maps Platform API Configuration
 google:
   maps:
-    api-key: ${GOOGLE_MAPS_API_KEY}
+    api-key: ${GOOGLE_MAPS_API_KEY:dummy}
   places:
-    api-key: ${GOOGLE_PLACES_API_KEY:${GOOGLE_MAPS_API_KEY}}
+    api-key: ${GOOGLE_PLACES_API_KEY:${GOOGLE_MAPS_API_KEY:dummy}}
   routes:
-    api-key: ${GOOGLE_ROUTES_API_KEY:${GOOGLE_MAPS_API_KEY}}
+    api-key: ${GOOGLE_ROUTES_API_KEY:${GOOGLE_MAPS_API_KEY:dummy}}
 
 # Gemini AI Configuration
 gemini:
@@ -133,7 +133,7 @@ gemini:
 ai:
   python:
     plan-url: ${AI_PYTHON_PLAN_URL:http://localhost:8000/api/v1/plan/generate}
-    internal-service-key: ${AI_PYTHON_INTERNAL_SERVICE_KEY:}
+    internal-service-key: ${AI_PYTHON_INTERNAL_SERVICE_KEY:dev-vivu-internal-key}
     connect-timeout-ms: ${AI_PYTHON_CONNECT_TIMEOUT_MS:3000}
     read-timeout-ms: ${AI_PYTHON_READ_TIMEOUT_MS:35000}
 
